@@ -1,0 +1,16 @@
+/.classpath
+/.project
+/.settings
+/eclipse
+.idea
+*.iml
+*.ipr
+*.iws
+
+/bin
+/build
+/target
+/.gradle
+/out
+
+/dependency-reduced-pom.xml

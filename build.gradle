@@ -1,0 +1,52 @@
+/*
+ * WorldEdit, a Minecraft world manipulation toolkit
+ * Copyright (C) sk89q <http://www.sk89q.com>
+ * Copyright (C) WorldEdit team and contributors
+ *
+ * This program is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as published by the
+ * Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+subprojects {
+    apply plugin: 'java'
+    group = 'org.gradle.sample'
+    version = '1.0'
+
+    sourceCompatibility = 1.6
+    targetCompatibility = 1.6
+
+    repositories {
+        mavenCentral()
+        maven { url "http://repo.bukkit.org/content/groups/public" }
+        maven { url "http://maven.sk89q.com/repo/" }
+    }
+
+    dependencies {
+        compile "com.sk89q:worldedit:6.0.0-SNAPSHOT"
+        testCompile "junit:junit:4.11"
+    }
+
+    buildDir = new File(rootProject.projectDir, "build/")
+}
+
+project(':craftbukkit_1_7_5') {
+    dependencies {
+        compile "org.bukkit:craftbukkit:1.7.9-R0.1-SNAPSHOT"
+    }
+}
+
+project(':craftbukkit_1_7_10') {
+    dependencies {
+        compile "org.bukkit:craftbukkit:1.7.10-R0.1-SNAPSHOT"
+    }
+}
