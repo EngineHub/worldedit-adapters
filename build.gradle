@@ -39,13 +39,19 @@ subprojects {
     buildDir = new File(rootProject.projectDir, "build/")
 }
 
-project(':craftbukkit_1_7_5') {
+project(':craftbukkit_v1_7_R2') {
+    dependencies {
+        compile "org.bukkit:craftbukkit:1.7.5-R0.1-SNAPSHOT"
+    }
+}
+
+project(':craftbukkit_v1_7_R3') {
     dependencies {
         compile "org.bukkit:craftbukkit:1.7.9-R0.1-SNAPSHOT"
     }
 }
 
-project(':craftbukkit_1_7_10') {
+project(':craftbukkit_v1_7_R4') {
     dependencies {
         compile "org.bukkit:craftbukkit:1.7.10-R0.1-SNAPSHOT"
     }
