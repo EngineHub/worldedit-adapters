@@ -35,7 +35,11 @@ import com.sk89q.jnbt.StringTag;
 import com.sk89q.jnbt.Tag;
 import com.sk89q.worldedit.blocks.BaseBlock;
 import com.sk89q.worldedit.bukkit.adapter.BukkitImplAdapter;
+import com.sk89q.worldedit.entity.BaseEntity;
+import com.sk89q.worldedit.internal.Constants;
 import net.minecraft.server.v1_7_R2.Block;
+import net.minecraft.server.v1_7_R2.Entity;
+import net.minecraft.server.v1_7_R2.EntityTypes;
 import net.minecraft.server.v1_7_R2.NBTBase;
 import net.minecraft.server.v1_7_R2.NBTTagByte;
 import net.minecraft.server.v1_7_R2.NBTTagByteArray;
@@ -50,11 +54,16 @@ import net.minecraft.server.v1_7_R2.NBTTagLong;
 import net.minecraft.server.v1_7_R2.NBTTagShort;
 import net.minecraft.server.v1_7_R2.NBTTagString;
 import net.minecraft.server.v1_7_R2.TileEntity;
+import net.minecraft.server.v1_7_R2.World;
+import net.minecraft.server.v1_7_R2.WorldServer;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.craftbukkit.v1_7_R2.CraftServer;
 import org.bukkit.craftbukkit.v1_7_R2.CraftWorld;
+import org.bukkit.craftbukkit.v1_7_R2.entity.CraftEntity;
+import org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason;
 
+import javax.annotation.Nullable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -102,23 +111,66 @@ public final class CraftBukkit_v1_7_R2 implements BukkitImplAdapter {
     }
 
     /**
-     * Read the given {@code tag} into the given tile entity.
+     * Read the given NBT data into the given tile entity.
      *
      * @param tileEntity the tile entity
      * @param tag the tag
      */
-    private static void setTileEntityTag(TileEntity tileEntity, NBTTagCompound tag) {
+    private static void readTagIntoTileEntity(NBTTagCompound tag, TileEntity tileEntity) {
         tileEntity.a(tag);
     }
 
     /**
-     * Read the given {@code tag} from the given tile entity.
+     * Write the tile entity's NBT data to the given tag.
      *
      * @param tileEntity the tile entity
      * @param tag the tag
      */
-    private static void getTileEntityTag(TileEntity tileEntity, NBTTagCompound tag) {
+    private static void readTileEntityIntoTag(TileEntity tileEntity, NBTTagCompound tag) {
         tileEntity.b(tag);
+    }
+
+    /**
+     * Get the ID string of the given entity.
+     *
+     * @param entity the entity
+     * @return the entity ID or null if one is not known
+     */
+    @Nullable
+    private static String getEntityId(Entity entity) {
+        return EntityTypes.b(entity);
+    }
+
+    /**
+     * Create an entity using the given entity ID.
+     *
+     * @param id the entity ID
+     * @param world the world
+     * @return an entity or null
+     */
+    @Nullable
+    private static Entity createEntityFromId(String id, World world) {
+        return EntityTypes.createEntityByName(id, world);
+    }
+
+    /**
+     * Write the given NBT data into the given entity.
+     *
+     * @param entity the entity
+     * @param tag the tag
+     */
+    private static void readTagIntoEntity(NBTTagCompound tag, Entity entity) {
+        entity.f(tag);
+    }
+
+    /**
+     * Write the entity's NBT data to the given tag.
+     *
+     * @param entity the entity
+     * @param tag the tag
+     */
+    private static void readEntityIntoTag(Entity entity, NBTTagCompound tag) {
+        entity.e(tag);
     }
 
     // ------------------------------------------------------------------------
@@ -142,7 +194,7 @@ public final class CraftBukkit_v1_7_R2 implements BukkitImplAdapter {
         TileEntity te = craftWorld.getHandle().getTileEntity(x, y, z);
         if (te != null) {
             NBTTagCompound tag = new NBTTagCompound();
-            getTileEntityTag(te, tag); // Load data
+            readTileEntityIntoTag(te, tag); // Load data
             block.setNbtData((CompoundTag) toNative(tag));
         }
 
@@ -173,7 +225,7 @@ public final class CraftBukkit_v1_7_R2 implements BukkitImplAdapter {
                 tag.set("x", new NBTTagInt(x));
                 tag.set("y", new NBTTagInt(y));
                 tag.set("z", new NBTTagInt(z));
-                setTileEntityTag(tileEntity, tag); // Load data
+                readTagIntoTileEntity(tag, tileEntity); // Load data
             }
         }
 
@@ -187,6 +239,54 @@ public final class CraftBukkit_v1_7_R2 implements BukkitImplAdapter {
         }
 
         return changed;
+    }
+
+    @Override
+    public BaseEntity getEntity(org.bukkit.entity.Entity entity) {
+        checkNotNull(entity);
+
+        CraftEntity craftEntity = ((CraftEntity) entity);
+        Entity mcEntity = craftEntity.getHandle();
+
+        String id = getEntityId(mcEntity);
+
+        if (id != null) {
+            NBTTagCompound tag = new NBTTagCompound();
+            readEntityIntoTag(mcEntity, tag);
+            return new BaseEntity(id, (CompoundTag) toNative(tag));
+        } else {
+            return null;
+        }
+    }
+
+    @Nullable
+    @Override
+    public org.bukkit.entity.Entity createEntity(Location location, BaseEntity state) {
+        checkNotNull(location);
+        checkNotNull(state);
+
+        CraftWorld craftWorld = ((CraftWorld) location.getWorld());
+        WorldServer worldServer = craftWorld.getHandle();
+
+        Entity createdEntity = createEntityFromId(state.getTypeId(), craftWorld.getHandle());
+
+        if (createdEntity != null) {
+            CompoundTag nativeTag = state.getNbtData();
+            if (nativeTag != null) {
+                NBTTagCompound tag = (NBTTagCompound) fromNative(nativeTag);
+                for (String name : Constants.NO_COPY_ENTITY_NBT_FIELDS) {
+                    tag.remove(name);
+                }
+                readTagIntoEntity(tag, createdEntity);
+            }
+
+            createdEntity.setLocation(location.getX(), location.getY(), location.getZ(), location.getYaw(), location.getPitch());
+
+            worldServer.addEntity(createdEntity, SpawnReason.CUSTOM);
+            return createdEntity.getBukkitEntity();
+        } else {
+            return null;
+        }
     }
 
     /**
