@@ -37,6 +37,7 @@ import com.sk89q.worldedit.blocks.BaseBlock;
 import com.sk89q.worldedit.bukkit.adapter.BukkitImplAdapter;
 import com.sk89q.worldedit.entity.BaseEntity;
 import com.sk89q.worldedit.internal.Constants;
+import net.minecraft.server.v1_7_R3.BiomeBase;
 import net.minecraft.server.v1_7_R3.Block;
 import net.minecraft.server.v1_7_R3.Entity;
 import net.minecraft.server.v1_7_R3.EntityTypes;
@@ -58,8 +59,11 @@ import net.minecraft.server.v1_7_R3.World;
 import net.minecraft.server.v1_7_R3.WorldServer;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.block.Biome;
 import org.bukkit.craftbukkit.v1_7_R3.CraftServer;
 import org.bukkit.craftbukkit.v1_7_R3.CraftWorld;
+import org.bukkit.craftbukkit.v1_7_R3.block.CraftBlock;
 import org.bukkit.craftbukkit.v1_7_R3.entity.CraftEntity;
 import org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason;
 
@@ -176,6 +180,30 @@ public final class CraftBukkit_v1_7_R3 implements BukkitImplAdapter {
     // ------------------------------------------------------------------------
     // Code that is less likely to break
     // ------------------------------------------------------------------------
+
+    @SuppressWarnings("deprecation")
+    @Override
+    public int getBlockId(Material material) {
+        return material.getId();
+    }
+
+    @SuppressWarnings("deprecation")
+    @Override
+    public Material getMaterial(int id) {
+        return Material.getMaterial(id);
+    }
+
+    @Override
+    public int getBiomeId(Biome biome) {
+        BiomeBase mcBiome = CraftBlock.biomeToBiomeBase(biome);
+        return mcBiome != null ? mcBiome.id : 0;
+    }
+
+    @Override
+    public Biome getBiome(int id) {
+        BiomeBase mcBiome = BiomeBase.getBiome(id);
+        return CraftBlock.biomeBaseToBiome(mcBiome); // Defaults to ocean if it's an invalid ID
+    }
 
     @SuppressWarnings("deprecation")
     @Override
