@@ -19,6 +19,7 @@
 
 rootProject.name = 'worldedit-adapters'
 
-include 'craftbukkit_v1_7_R2',
+include 'craftbukkit_v1_6_R3',
+        'craftbukkit_v1_7_R2',
         'craftbukkit_v1_7_R3',
         'craftbukkit_v1_7_R4'
