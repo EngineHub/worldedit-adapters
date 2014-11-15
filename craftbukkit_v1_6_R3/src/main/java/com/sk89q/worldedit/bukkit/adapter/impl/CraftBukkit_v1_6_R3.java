@@ -256,7 +256,7 @@ public final class CraftBukkit_v1_6_R3 implements BukkitImplAdapter {
             // though we do not do this on the Forge version
             TileEntity tileEntity = craftWorld.getHandle().getTileEntity(x, y, z);
             if (tileEntity != null) {
-                NBTTagCompound tag = (NBTTagCompound) fromNative(nativeTag);
+                NBTTagCompound tag = (NBTTagCompound) fromNative("", nativeTag);
                 tag.set("x", new NBTTagInt("x", x));
                 tag.set("y", new NBTTagInt("y", y));
                 tag.set("z", new NBTTagInt("z", z));
@@ -308,7 +308,7 @@ public final class CraftBukkit_v1_6_R3 implements BukkitImplAdapter {
         if (createdEntity != null) {
             CompoundTag nativeTag = state.getNbtData();
             if (nativeTag != null) {
-                NBTTagCompound tag = (NBTTagCompound) fromNative(nativeTag);
+                NBTTagCompound tag = (NBTTagCompound) fromNative(state.getTypeId(), nativeTag);
                 for (String name : Constants.NO_COPY_ENTITY_NBT_FIELDS) {
                     tag.remove(name);
                 }
@@ -401,35 +401,32 @@ public final class CraftBukkit_v1_6_R3 implements BukkitImplAdapter {
                 NBTBase base = ((NBTTagCompound) foreign).get(key);
                 values.put(key, toNative(key, base));
             }
-            return new CompoundTag(name, values);
+            return new CompoundTag(values);
         } else if (foreign instanceof NBTTagByte) {
-            return new ByteTag(name, ((NBTTagByte) foreign).data); // getByte
+            return new ByteTag(((NBTTagByte) foreign).data); // getByte
         } else if (foreign instanceof NBTTagByteArray) {
-            return new ByteArrayTag(name,
-                    ((NBTTagByteArray) foreign).data); // data
+            return new ByteArrayTag(((NBTTagByteArray) foreign).data); // data
         } else if (foreign instanceof NBTTagDouble) {
-            return new DoubleTag(name,
-                    ((NBTTagDouble) foreign).data); // getDouble
+            return new DoubleTag(((NBTTagDouble) foreign).data); // getDouble
         } else if (foreign instanceof NBTTagFloat) {
-            return new FloatTag(name, ((NBTTagFloat) foreign).data); // getFloat
+            return new FloatTag(((NBTTagFloat) foreign).data); // getFloat
         } else if (foreign instanceof NBTTagInt) {
-            return new IntTag(name, ((NBTTagInt) foreign).data); // getInt
+            return new IntTag(((NBTTagInt) foreign).data); // getInt
         } else if (foreign instanceof NBTTagIntArray) {
-            return new IntArrayTag(name,
-                    ((NBTTagIntArray) foreign).data); // data
+            return new IntArrayTag(((NBTTagIntArray) foreign).data); // data
         } else if (foreign instanceof NBTTagList) {
             try {
-                return toNative(name, (NBTTagList) foreign);
+                return toNative((NBTTagList) foreign);
             } catch (Throwable e) {
                 logger.log(Level.WARNING, "Failed to convert NBTTagList", e);
-                return new ListTag(name, ByteTag.class, new ArrayList<ByteTag>());
+                return new ListTag(ByteTag.class, new ArrayList<ByteTag>());
             }
         } else if (foreign instanceof NBTTagLong) {
-            return new LongTag(name, ((NBTTagLong) foreign).data); // getLong
+            return new LongTag(((NBTTagLong) foreign).data); // getLong
         } else if (foreign instanceof NBTTagShort) {
-            return new ShortTag(name, ((NBTTagShort) foreign).data); // getShort
+            return new ShortTag(((NBTTagShort) foreign).data); // getShort
         } else if (foreign instanceof NBTTagString) {
-            return new StringTag(name, ((NBTTagString) foreign).data); // data
+            return new StringTag(((NBTTagString) foreign).data); // data
         } else if (foreign instanceof NBTTagEnd) {
             return new EndTag();
         } else {
@@ -440,7 +437,6 @@ public final class CraftBukkit_v1_6_R3 implements BukkitImplAdapter {
     /**
      * Convert a foreign NBT list tag into a native WorldEdit one.
      *
-     * @param name the field name
      * @param foreign the foreign tag
      * @return the converted tag
      * @throws NoSuchFieldException on error
@@ -448,7 +444,7 @@ public final class CraftBukkit_v1_6_R3 implements BukkitImplAdapter {
      * @throws IllegalArgumentException on error
      * @throws IllegalAccessException on error
      */
-    private ListTag toNative(String name, NBTTagList foreign) throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
+    private ListTag toNative(NBTTagList foreign) throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
         List<Tag> values = new ArrayList<Tag>();
 
         List foreignList;
@@ -461,7 +457,7 @@ public final class CraftBukkit_v1_6_R3 implements BukkitImplAdapter {
             cls = tag.getClass();
         }
 
-        return new ListTag(name, cls, values);
+        return new ListTag(cls, values);
     }
 
     /**
@@ -470,7 +466,7 @@ public final class CraftBukkit_v1_6_R3 implements BukkitImplAdapter {
      * @param foreign structure to convert
      * @return non-native structure
      */
-    private NBTBase fromNative(Tag foreign) {
+    private NBTBase fromNative(String name, Tag foreign) {
         if (foreign == null) {
             return null;
         }
@@ -478,32 +474,32 @@ public final class CraftBukkit_v1_6_R3 implements BukkitImplAdapter {
             NBTTagCompound tag = new NBTTagCompound();
             for (Map.Entry<String, Tag> entry : ((CompoundTag) foreign)
                     .getValue().entrySet()) {
-                tag.set(entry.getKey(), fromNative(entry.getValue()));
+                tag.set(entry.getKey(), fromNative(entry.getKey(), entry.getValue()));
             }
             return tag;
         } else if (foreign instanceof ByteTag) {
-            return new NBTTagByte(foreign.getName(), ((ByteTag) foreign).getValue());
+            return new NBTTagByte(name, ((ByteTag) foreign).getValue());
         } else if (foreign instanceof ByteArrayTag) {
-            return new NBTTagByteArray(foreign.getName(), ((ByteArrayTag) foreign).getValue());
+            return new NBTTagByteArray(name, ((ByteArrayTag) foreign).getValue());
         } else if (foreign instanceof DoubleTag) {
-            return new NBTTagDouble(foreign.getName(), ((DoubleTag) foreign).getValue());
+            return new NBTTagDouble(name, ((DoubleTag) foreign).getValue());
         } else if (foreign instanceof FloatTag) {
-            return new NBTTagFloat(foreign.getName(), ((FloatTag) foreign).getValue());
+            return new NBTTagFloat(name, ((FloatTag) foreign).getValue());
         } else if (foreign instanceof IntTag) {
-            return new NBTTagInt(foreign.getName(), ((IntTag) foreign).getValue());
+            return new NBTTagInt(name, ((IntTag) foreign).getValue());
         } else if (foreign instanceof IntArrayTag) {
-            return new NBTTagIntArray(foreign.getName(), ((IntArrayTag) foreign).getValue());
+            return new NBTTagIntArray(name, ((IntArrayTag) foreign).getValue());
         } else if (foreign instanceof ListTag) {
             NBTTagList tag = new NBTTagList();
             ListTag foreignList = (ListTag) foreign;
             for (Tag t : foreignList.getValue()) {
-                tag.add(fromNative(t));
+                tag.add(fromNative("", t));
             }
             return tag;
         } else if (foreign instanceof LongTag) {
-            return new NBTTagLong(foreign.getName(), ((LongTag) foreign).getValue());
+            return new NBTTagLong(name, ((LongTag) foreign).getValue());
         } else if (foreign instanceof ShortTag) {
-            return new NBTTagShort(foreign.getName(), ((ShortTag) foreign).getValue());
+            return new NBTTagShort(name, ((ShortTag) foreign).getValue());
         } else if (foreign instanceof StringTag) {
             return new NBTTagString(((StringTag) foreign).getValue());
         } else if (foreign instanceof EndTag) {

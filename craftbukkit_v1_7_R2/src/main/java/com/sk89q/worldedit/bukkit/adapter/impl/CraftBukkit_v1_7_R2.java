@@ -318,70 +318,14 @@ public final class CraftBukkit_v1_7_R2 implements BukkitImplAdapter {
     }
 
     /**
-     * Get the tag name, which is used for a workaround for WorldEdit's
-     * NBT library, JNBT.
-     *
-     * @param i the number representing the tag type
-     * @return a string to represent the tag type
-     */
-    private static String getTagName(int i) {
-        // seriously these two methods are hacky - our jnbt spec needs updating
-        // copied from NMS 1.7.5- code, since it was removed in 1.7.8
-        switch (i) {
-            case 0:
-                return "TAG_End";
-            case 1:
-                return "TAG_Byte";
-            case 2:
-                return "TAG_Short";
-            case 3:
-                return "TAG_Int";
-            case 4:
-                return "TAG_Long";
-            case 5:
-                return "TAG_Float";
-            case 6:
-                return "TAG_Double";
-            case 7:
-                return "TAG_Byte_Array";
-            case 8:
-                return "TAG_String";
-            case 9:
-                return "TAG_List";
-            case 10:
-                return "TAG_Compound";
-            case 11:
-                return "TAG_Int_Array";
-            case 99:
-                return "Any Numeric Tag";
-            default:
-                return "UNKNOWN";
-        }
-    }
-
-    /**
      * Converts from a non-native NMS NBT structure to a native WorldEdit NBT
      * structure.
      *
      * @param foreign non-native NMS NBT structure
-     * @return native WorldEdit NBT structure
-     */
-    private Tag toNative(NBTBase foreign) {
-        // temporary fix since Mojang removed names from tags
-        // our nbt spec will need to be updated to theirs
-        return toNative(getTagName(foreign.getTypeId()), foreign);
-    }
-
-    /**
-     * Converts from a non-native NMS NBT structure to a native WorldEdit NBT
-     * structure.
-     *
-     * @param foreign non-native NMS NBT structure
-     * @param name name for the tag, if it has one
      * @return native WorldEdit NBT structure
      */
     @SuppressWarnings("unchecked")
-    private Tag toNative(String name, NBTBase foreign) {
+    private Tag toNative(NBTBase foreign) {
         if (foreign == null) {
             return null;
         }
@@ -392,37 +336,34 @@ public final class CraftBukkit_v1_7_R2 implements BukkitImplAdapter {
             for (Object obj : foreignKeys) {
                 String key = (String) obj;
                 NBTBase base = ((NBTTagCompound) foreign).get(key);
-                values.put(key, toNative(key, base));
+                values.put(key, toNative(base));
             }
-            return new CompoundTag(name, values);
+            return new CompoundTag(values);
         } else if (foreign instanceof NBTTagByte) {
-            return new ByteTag(name, ((NBTTagByte) foreign).f()); // getByte
+            return new ByteTag(((NBTTagByte) foreign).f()); // getByte
         } else if (foreign instanceof NBTTagByteArray) {
-            return new ByteArrayTag(name,
-                    ((NBTTagByteArray) foreign).c()); // data
+            return new ByteArrayTag(((NBTTagByteArray) foreign).c()); // data
         } else if (foreign instanceof NBTTagDouble) {
-            return new DoubleTag(name,
-                    ((NBTTagDouble) foreign).g()); // getDouble
+            return new DoubleTag(((NBTTagDouble) foreign).g()); // getDouble
         } else if (foreign instanceof NBTTagFloat) {
-            return new FloatTag(name, ((NBTTagFloat) foreign).h()); // getFloat
+            return new FloatTag(((NBTTagFloat) foreign).h()); // getFloat
         } else if (foreign instanceof NBTTagInt) {
-            return new IntTag(name, ((NBTTagInt) foreign).d()); // getInt
+            return new IntTag(((NBTTagInt) foreign).d()); // getInt
         } else if (foreign instanceof NBTTagIntArray) {
-            return new IntArrayTag(name,
-                    ((NBTTagIntArray) foreign).c()); // data
+            return new IntArrayTag(((NBTTagIntArray) foreign).c()); // data
         } else if (foreign instanceof NBTTagList) {
             try {
-                return toNative(name, (NBTTagList) foreign);
+                return toNativeList((NBTTagList) foreign);
             } catch (Throwable e) {
                 logger.log(Level.WARNING, "Failed to convert NBTTagList", e);
-                return new ListTag(name, ByteTag.class, new ArrayList<ByteTag>());
+                return new ListTag(ByteTag.class, new ArrayList<ByteTag>());
             }
         } else if (foreign instanceof NBTTagLong) {
-            return new LongTag(name, ((NBTTagLong) foreign).c()); // getLong
+            return new LongTag(((NBTTagLong) foreign).c()); // getLong
         } else if (foreign instanceof NBTTagShort) {
-            return new ShortTag(name, ((NBTTagShort) foreign).e()); // getShort
+            return new ShortTag(((NBTTagShort) foreign).e()); // getShort
         } else if (foreign instanceof NBTTagString) {
-            return new StringTag(name, ((NBTTagString) foreign).a_()); // data
+            return new StringTag(((NBTTagString) foreign).a_()); // data
         } else if (foreign instanceof NBTTagEnd) {
             return new EndTag();
         } else {
@@ -433,7 +374,6 @@ public final class CraftBukkit_v1_7_R2 implements BukkitImplAdapter {
     /**
      * Convert a foreign NBT list tag into a native WorldEdit one.
      *
-     * @param name the field name
      * @param foreign the foreign tag
      * @return the converted tag
      * @throws NoSuchFieldException on error
@@ -441,7 +381,7 @@ public final class CraftBukkit_v1_7_R2 implements BukkitImplAdapter {
      * @throws IllegalArgumentException on error
      * @throws IllegalAccessException on error
      */
-    private ListTag toNative(String name, NBTTagList foreign) throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
+    private ListTag toNativeList(NBTTagList foreign) throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
         List<Tag> values = new ArrayList<Tag>();
         int type = foreign.d();
 
@@ -449,11 +389,11 @@ public final class CraftBukkit_v1_7_R2 implements BukkitImplAdapter {
         foreignList = (List) nbtListTagListField.get(foreign);
         for (int i = 0; i < foreign.size(); i++) {
             NBTBase element = (NBTBase) foreignList.get(i);
-            values.add(toNative(null, element)); // List elements shouldn't have names
+            values.add(toNative(element)); // List elements shouldn't have names
         }
 
         Class<? extends Tag> cls = NBTConstants.getClassFromType(type);
-        return new ListTag(name, cls, values);
+        return new ListTag(cls, values);
     }
 
     /**

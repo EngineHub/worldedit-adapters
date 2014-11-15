@@ -33,7 +33,7 @@ subprojects {
     }
 
     dependencies {
-        compile "com.sk89q:worldedit:6.0.0-SNAPSHOT"
+        compile "com.sk89q.worldedit:worldedit-bukkit:6.0.0-SNAPSHOT"
         testCompile "junit:junit:4.11"
     }
 
