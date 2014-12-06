@@ -63,3 +63,9 @@ project(':craftbukkit_v1_7_R4') {
         compile "org.bukkit:craftbukkit:1.7.10-R0.1-SNAPSHOT"
     }
 }
+
+project(':rainbow_v50') {
+    dependencies {
+        compile files("libs/rainbow.jar", "libs/PluginBukkitBridge.jar")
+    }
+}
