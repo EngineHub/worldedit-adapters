@@ -75,3 +75,9 @@ project(':spigot_v1_8_R2') {
         compile "org.bukkit:craftbukkit:1.8.3-R0.1-SNAPSHOT"
     }
 }
+
+project(':spigot_v1_8_R3') {
+    dependencies {
+        compile "org.bukkit:craftbukkit:1.8.5-R0.1-SNAPSHOT"
+    }
+}
