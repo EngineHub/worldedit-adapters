@@ -25,5 +25,6 @@ include 'craftbukkit_v1_6_R3',
         'craftbukkit_v1_7_R4',
         'spigot_v1_8_R1',
         'spigot_v1_8_R2',
-        'spigot_v1_8_R3'
+        'spigot_v1_8_R3',
+        'spigot_v1_9_R1'
 
