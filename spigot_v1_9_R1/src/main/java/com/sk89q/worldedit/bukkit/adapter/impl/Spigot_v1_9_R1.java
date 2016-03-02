@@ -37,34 +37,34 @@ import com.sk89q.worldedit.blocks.BaseBlock;
 import com.sk89q.worldedit.bukkit.adapter.BukkitImplAdapter;
 import com.sk89q.worldedit.entity.BaseEntity;
 import com.sk89q.worldedit.internal.Constants;
-import net.minecraft.server.v1_7_R2.BiomeBase;
-import net.minecraft.server.v1_7_R2.Block;
-import net.minecraft.server.v1_7_R2.Entity;
-import net.minecraft.server.v1_7_R2.EntityTypes;
-import net.minecraft.server.v1_7_R2.NBTBase;
-import net.minecraft.server.v1_7_R2.NBTTagByte;
-import net.minecraft.server.v1_7_R2.NBTTagByteArray;
-import net.minecraft.server.v1_7_R2.NBTTagCompound;
-import net.minecraft.server.v1_7_R2.NBTTagDouble;
-import net.minecraft.server.v1_7_R2.NBTTagEnd;
-import net.minecraft.server.v1_7_R2.NBTTagFloat;
-import net.minecraft.server.v1_7_R2.NBTTagInt;
-import net.minecraft.server.v1_7_R2.NBTTagIntArray;
-import net.minecraft.server.v1_7_R2.NBTTagList;
-import net.minecraft.server.v1_7_R2.NBTTagLong;
-import net.minecraft.server.v1_7_R2.NBTTagShort;
-import net.minecraft.server.v1_7_R2.NBTTagString;
-import net.minecraft.server.v1_7_R2.TileEntity;
-import net.minecraft.server.v1_7_R2.World;
-import net.minecraft.server.v1_7_R2.WorldServer;
+import net.minecraft.server.v1_9_R1.BiomeBase;
+import net.minecraft.server.v1_9_R1.BlockPosition;
+import net.minecraft.server.v1_9_R1.Entity;
+import net.minecraft.server.v1_9_R1.EntityTypes;
+import net.minecraft.server.v1_9_R1.NBTBase;
+import net.minecraft.server.v1_9_R1.NBTTagByte;
+import net.minecraft.server.v1_9_R1.NBTTagByteArray;
+import net.minecraft.server.v1_9_R1.NBTTagCompound;
+import net.minecraft.server.v1_9_R1.NBTTagDouble;
+import net.minecraft.server.v1_9_R1.NBTTagEnd;
+import net.minecraft.server.v1_9_R1.NBTTagFloat;
+import net.minecraft.server.v1_9_R1.NBTTagInt;
+import net.minecraft.server.v1_9_R1.NBTTagIntArray;
+import net.minecraft.server.v1_9_R1.NBTTagList;
+import net.minecraft.server.v1_9_R1.NBTTagLong;
+import net.minecraft.server.v1_9_R1.NBTTagShort;
+import net.minecraft.server.v1_9_R1.NBTTagString;
+import net.minecraft.server.v1_9_R1.TileEntity;
+import net.minecraft.server.v1_9_R1.World;
+import net.minecraft.server.v1_9_R1.WorldServer;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Biome;
-import org.bukkit.craftbukkit.v1_7_R2.CraftServer;
-import org.bukkit.craftbukkit.v1_7_R2.CraftWorld;
-import org.bukkit.craftbukkit.v1_7_R2.block.CraftBlock;
-import org.bukkit.craftbukkit.v1_7_R2.entity.CraftEntity;
+import org.bukkit.craftbukkit.v1_9_R1.CraftServer;
+import org.bukkit.craftbukkit.v1_9_R1.CraftWorld;
+import org.bukkit.craftbukkit.v1_9_R1.block.CraftBlock;
+import org.bukkit.craftbukkit.v1_9_R1.entity.CraftEntity;
 import org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason;
 
 import javax.annotation.Nullable;
@@ -75,12 +75,13 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public final class CraftBukkit_v1_7_R2 implements BukkitImplAdapter {
+public final class Spigot_v1_9_R1 implements BukkitImplAdapter {
 
     private final Logger logger = Logger.getLogger(getClass().getCanonicalName());
 
@@ -91,7 +92,7 @@ public final class CraftBukkit_v1_7_R2 implements BukkitImplAdapter {
     // Code that may break between versions of Minecraft
     // ------------------------------------------------------------------------
 
-    public CraftBukkit_v1_7_R2() throws NoSuchFieldException, NoSuchMethodException {
+    public Spigot_v1_9_R1() throws NoSuchFieldException, NoSuchMethodException {
         // A simple test
         CraftServer.class.cast(Bukkit.getServer());
 
@@ -102,16 +103,6 @@ public final class CraftBukkit_v1_7_R2 implements BukkitImplAdapter {
         // The method to create an NBTBase tag given its type ID
         nbtCreateTagMethod = NBTBase.class.getDeclaredMethod("createTag", byte.class);
         nbtCreateTagMethod.setAccessible(true);
-    }
-
-    /**
-     * Get the {@code Block} object from Minecraft given the ID.
-     *
-     * @param type the type
-     * @return the block
-     */
-    private static Block getBlockFromTypeId(int type) {
-        return Block.e(type);
     }
 
     /**
@@ -131,7 +122,7 @@ public final class CraftBukkit_v1_7_R2 implements BukkitImplAdapter {
      * @param tag the tag
      */
     private static void readTileEntityIntoTag(TileEntity tileEntity, NBTTagCompound tag) {
-        tileEntity.b(tag);
+        tileEntity.save(tag);
     }
 
     /**
@@ -196,7 +187,7 @@ public final class CraftBukkit_v1_7_R2 implements BukkitImplAdapter {
     @Override
     public int getBiomeId(Biome biome) {
         BiomeBase mcBiome = CraftBlock.biomeToBiomeBase(biome);
-        return mcBiome != null ? mcBiome.id : 0;
+        return mcBiome != null ? BiomeBase.a(mcBiome) : 0;
     }
 
     @Override
@@ -219,7 +210,7 @@ public final class CraftBukkit_v1_7_R2 implements BukkitImplAdapter {
         BaseBlock block = new BaseBlock(bukkitBlock.getTypeId(), bukkitBlock.getData());
 
         // Read the NBT data
-        TileEntity te = craftWorld.getHandle().getTileEntity(x, y, z);
+        TileEntity te = craftWorld.getHandle().getTileEntity(new BlockPosition(x, y, z));
         if (te != null) {
             NBTTagCompound tag = new NBTTagCompound();
             readTileEntityIntoTag(te, tag); // Load data
@@ -239,15 +230,18 @@ public final class CraftBukkit_v1_7_R2 implements BukkitImplAdapter {
         int y = location.getBlockY();
         int z = location.getBlockZ();
 
-        // Set the block ID
-        boolean changed = craftWorld.getHandle().setTypeAndData(x, y, z, getBlockFromTypeId(block.getId()), block.getData(), 0);
+        // Two pass update:
+        // Note, this will notify blocks BEFORE the tile entity is set
+
+        @SuppressWarnings("deprecation")
+        boolean changed = location.getBlock().setTypeIdAndData(block.getId(), (byte) block.getData(), notifyAndLight);
 
         // Copy NBT data for the block
         CompoundTag nativeTag = block.getNbtData();
         if (nativeTag != null) {
             // We will assume that the tile entity was created for us,
             // though we do not do this on the Forge version
-            TileEntity tileEntity = craftWorld.getHandle().getTileEntity(x, y, z);
+            TileEntity tileEntity = craftWorld.getHandle().getTileEntity(new BlockPosition(x, y, z));
             if (tileEntity != null) {
                 NBTTagCompound tag = (NBTTagCompound) fromNative(nativeTag);
                 tag.set("x", new NBTTagInt(x));
@@ -255,15 +249,6 @@ public final class CraftBukkit_v1_7_R2 implements BukkitImplAdapter {
                 tag.set("z", new NBTTagInt(z));
                 readTagIntoTileEntity(tag, tileEntity); // Load data
             }
-        }
-
-        // Set the data
-        changed = craftWorld.getHandle().setData(x, y, z, block.getData(), 0) || changed;
-
-        // Update, notify, and light
-        if (changed && notifyAndLight) {
-            craftWorld.getHandle().notify(x, y, z);
-            craftWorld.getHandle().update(x, y, z, getBlockFromTypeId(block.getId()));
         }
 
         return changed;
@@ -331,12 +316,11 @@ public final class CraftBukkit_v1_7_R2 implements BukkitImplAdapter {
         }
         if (foreign instanceof NBTTagCompound) {
             Map<String, Tag> values = new HashMap<String, Tag>();
-            Collection<Object> foreignKeys = ((NBTTagCompound) foreign).c();
+            Set<String> foreignKeys = ((NBTTagCompound) foreign).c();
 
-            for (Object obj : foreignKeys) {
-                String key = (String) obj;
-                NBTBase base = ((NBTTagCompound) foreign).get(key);
-                values.put(key, toNative(base));
+            for (String str : foreignKeys) {
+                NBTBase base = ((NBTTagCompound) foreign).get(str);
+                values.put(str, toNative(base));
             }
             return new CompoundTag(values);
         } else if (foreign instanceof NBTTagByte) {
