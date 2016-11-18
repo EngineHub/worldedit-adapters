@@ -99,3 +99,9 @@ project(':spigot_v1_10_R1') {
         compile "org.bukkit:craftbukkit:1.10-R0.1-SNAPSHOT"
     }
 }
+
+project(':spigot_v1_11_R1') {
+    dependencies {
+        compile "org.bukkit:craftbukkit:1.11-R0.1-SNAPSHOT"
+    }
+}
