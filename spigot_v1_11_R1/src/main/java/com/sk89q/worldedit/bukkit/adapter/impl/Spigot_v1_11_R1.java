@@ -134,7 +134,9 @@ public final class Spigot_v1_11_R1 implements BukkitImplAdapter {
      */
     @Nullable
     private static String getEntityId(Entity entity) {
-        return EntityTypes.b(entity);
+        MinecraftKey minecraftkey = EntityTypes.a(entity);
+
+        return minecraftkey == null ? null : minecraftkey.toString();
     }
 
     /**
