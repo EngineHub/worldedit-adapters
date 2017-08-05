@@ -82,7 +82,7 @@ import java.util.logging.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public final class Spigot_v1_12_R1 implements BukkitImplAdapter {
+public final class Spigot_v1_12_R2 implements BukkitImplAdapter {
 
     private final Logger logger = Logger.getLogger(getClass().getCanonicalName());
 
@@ -93,11 +93,11 @@ public final class Spigot_v1_12_R1 implements BukkitImplAdapter {
     // Code that may break between versions of Minecraft
     // ------------------------------------------------------------------------
 
-    public Spigot_v1_12_R1() throws NoSuchFieldException, NoSuchMethodException {
+    public Spigot_v1_12_R2() throws NoSuchFieldException, NoSuchMethodException {
         // A simple test
         CraftServer.class.cast(Bukkit.getServer());
         // test between 1.12 and 1.12.1 since md_5 didn't update revision numbers
-        TileEntity.class.getDeclaredMethod("a", NBTTagCompound.class);
+        TileEntity.class.getDeclaredMethod("load", NBTTagCompound.class);
 
         // The list of tags on an NBTTagList
         nbtListTagListField = NBTTagList.class.getDeclaredField("list");
@@ -115,7 +115,7 @@ public final class Spigot_v1_12_R1 implements BukkitImplAdapter {
      * @param tag the tag
      */
     private static void readTagIntoTileEntity(NBTTagCompound tag, TileEntity tileEntity) {
-        tileEntity.a(tag);
+        tileEntity.load(tag);
     }
 
     /**
