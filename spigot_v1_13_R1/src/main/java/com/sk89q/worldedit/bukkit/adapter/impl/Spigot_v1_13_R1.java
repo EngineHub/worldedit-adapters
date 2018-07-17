@@ -47,6 +47,7 @@ import com.sk89q.worldedit.registry.state.DirectionalProperty;
 import com.sk89q.worldedit.registry.state.EnumProperty;
 import com.sk89q.worldedit.registry.state.IntegerProperty;
 import com.sk89q.worldedit.registry.state.Property;
+import com.sk89q.worldedit.util.Direction;
 import com.sk89q.worldedit.world.block.BlockState;
 import com.sk89q.worldedit.world.block.BlockStateHolder;
 import com.sk89q.worldedit.world.block.BlockType;
@@ -57,9 +58,12 @@ import net.minecraft.server.v1_13_R1.BlockStateBoolean;
 import net.minecraft.server.v1_13_R1.BlockStateDirection;
 import net.minecraft.server.v1_13_R1.BlockStateEnum;
 import net.minecraft.server.v1_13_R1.BlockStateInteger;
+import net.minecraft.server.v1_13_R1.BlockStateList;
 import net.minecraft.server.v1_13_R1.Entity;
 import net.minecraft.server.v1_13_R1.EntityTypes;
+import net.minecraft.server.v1_13_R1.IBlockData;
 import net.minecraft.server.v1_13_R1.IBlockState;
+import net.minecraft.server.v1_13_R1.INamable;
 import net.minecraft.server.v1_13_R1.MinecraftKey;
 import net.minecraft.server.v1_13_R1.NBTBase;
 import net.minecraft.server.v1_13_R1.NBTTagByte;
@@ -95,6 +99,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
@@ -312,25 +317,21 @@ public final class Spigot_v1_13_R1 implements BukkitImplAdapter {
         }
     }
 
-    @Override
-    public List<Object> getPropertyValues(BlockType blockType, Property<?> property) {
-        IBlockState<?> blockStateContainer = Block.getByName(blockType.getId()).getStates().a(property.getName());
-        return ImmutableList.copyOf(blockStateContainer.d());
-    }
-
+    @SuppressWarnings("unchecked")
     @Override
     public Map<String, ? extends Property> getProperties(BlockType blockType) {
-        Map<String, Property> properties = Maps.newHashMap();
-        for (IBlockState state : Block.getByName(blockType.getId()).getStates().d()) {
+        Map<String, Property> properties = Maps.newLinkedHashMap();
+        BlockStateList<Block, IBlockData> blockStateList = Block.getByName(blockType.getId()).getStates();
+        for (IBlockState state : blockStateList.d()) {
             Property property;
             if (state instanceof BlockStateBoolean) {
-                property = new BooleanProperty();
+                property = new BooleanProperty(state.a(), ImmutableList.copyOf(state.d()));
             } else if (state instanceof BlockStateDirection) {
-                property = new DirectionalProperty();
+                property = new DirectionalProperty(state.a(), (List<Direction>) state.d().stream().map(e -> Direction.valueOf(((Enum) e).name())).collect(Collectors.toList()));
             } else if (state instanceof BlockStateEnum) {
-                property = new EnumProperty();
+                property = new EnumProperty(state.a(), (List<String>) state.d().stream().map(e -> ((INamable) e).getName()).collect(Collectors.toList()));
             } else if (state instanceof BlockStateInteger) {
-                property = new IntegerProperty();
+                property = new IntegerProperty(state.a(), ImmutableList.copyOf(state.d()));
             } else {
                 throw new IllegalArgumentException("WorldEdit needs an update to support " + state.getClass().getSimpleName());
             }
