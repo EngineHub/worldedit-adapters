@@ -22,8 +22,8 @@ subprojects {
     group = 'org.gradle.sample'
     version = '1.0'
 
-    sourceCompatibility = 1.6
-    targetCompatibility = 1.6
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
 
     repositories {
         mavenLocal()
@@ -33,87 +33,15 @@ subprojects {
     }
 
     dependencies {
-        compile "com.sk89q.worldedit:worldedit-bukkit:6.0.0-SNAPSHOT"
+        compile "com.sk89q.worldedit:worldedit-bukkit:7.0.0-SNAPSHOT"
         testCompile "junit:junit:4.11"
     }
 
     buildDir = new File(rootProject.projectDir, "build/")
 }
 
-project(':craftbukkit_v1_6_R3') {
+project(':spigot_v1_13_R1') {
     dependencies {
-        compile "org.bukkit:craftbukkit:1.6.4-R0.1-SNAPSHOT"
-    }
-}
-
-project(':craftbukkit_v1_7_R2') {
-    dependencies {
-        compile "org.bukkit:craftbukkit:1.7.5-R0.1-SNAPSHOT"
-    }
-}
-
-project(':craftbukkit_v1_7_R3') {
-    dependencies {
-        compile "org.bukkit:craftbukkit:1.7.9-R0.1-SNAPSHOT"
-    }
-}
-
-project(':craftbukkit_v1_7_R4') {
-    dependencies {
-        compile "org.bukkit:craftbukkit:1.7.10-R0.1-SNAPSHOT"
-    }
-}
-
-project(':spigot_v1_8_R1') {
-    dependencies {
-        compile "org.bukkit:craftbukkit:1.8-R0.1-SNAPSHOT"
-    }
-}
-
-project(':spigot_v1_8_R2') {
-    dependencies {
-        compile "org.bukkit:craftbukkit:1.8.3-R0.1-SNAPSHOT"
-    }
-}
-
-project(':spigot_v1_8_R3') {
-    dependencies {
-        compile "org.bukkit:craftbukkit:1.8.6-R0.1-SNAPSHOT"
-    }
-}
-
-project(':spigot_v1_9_R1') {
-    dependencies {
-        compile "org.bukkit:craftbukkit:1.9-R0.1-SNAPSHOT"
-    }
-}
-
-project(':spigot_v1_9_R2') {
-    dependencies {
-        compile "org.bukkit:craftbukkit:1.9.4-R0.1-SNAPSHOT"
-    }
-}
-
-project(':spigot_v1_10_R1') {
-    dependencies {
-        compile "org.bukkit:craftbukkit:1.10-R0.1-SNAPSHOT"
-    }
-}
-
-project(':spigot_v1_11_R1') {
-    dependencies {
-        compile "org.bukkit:craftbukkit:1.11-R0.1-SNAPSHOT"
-    }
-}
-
-project(':spigot_v1_12_R1') {
-    dependencies {
-        compile "org.bukkit:craftbukkit:1.12-R0.1-SNAPSHOT"
-    }
-}
-
-project(':spigot_v1_12_R2') {
-    dependencies {
-        compile "org.bukkit:craftbukkit:1.12.1-R0.1-SNAPSHOT"
+        compile "org.bukkit:craftbukkit:1.13-pre7-R0.1-SNAPSHOT"
     }
 }
