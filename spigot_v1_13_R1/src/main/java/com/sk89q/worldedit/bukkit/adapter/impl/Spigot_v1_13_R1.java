@@ -320,22 +320,30 @@ public final class Spigot_v1_13_R1 implements BukkitImplAdapter {
     @SuppressWarnings("unchecked")
     @Override
     public Map<String, ? extends Property> getProperties(BlockType blockType) {
-        Map<String, Property> properties = Maps.newLinkedHashMap();
-        BlockStateList<Block, IBlockData> blockStateList = Block.getByName(blockType.getId()).getStates();
+        Map<String, Property> properties = Maps.newTreeMap(String::compareTo);
+        Block block = Block.getByName(blockType.getId());
+        if (block == null) {
+            logger.warning("Failed to find properties for " + blockType.getId());
+            return properties;
+        }
+        BlockStateList<Block, IBlockData> blockStateList = block.getStates();
         for (IBlockState state : blockStateList.d()) {
             Property property;
             if (state instanceof BlockStateBoolean) {
                 property = new BooleanProperty(state.a(), ImmutableList.copyOf(state.d()));
             } else if (state instanceof BlockStateDirection) {
-                property = new DirectionalProperty(state.a(), (List<Direction>) state.d().stream().map(e -> Direction.valueOf(((Enum) e).name())).collect(Collectors.toList()));
+                property = new DirectionalProperty(state.a(),
+                        (List<Direction>) state.d().stream().map(e -> Direction.valueOf(((INamable) e).getName().toUpperCase())).collect(Collectors.toList()));
             } else if (state instanceof BlockStateEnum) {
-                property = new EnumProperty(state.a(), (List<String>) state.d().stream().map(e -> ((INamable) e).getName()).collect(Collectors.toList()));
+                property = new EnumProperty(state.a(),
+                        (List<String>) state.d().stream().map(e -> ((INamable) e).getName()).collect(Collectors.toList()));
             } else if (state instanceof BlockStateInteger) {
                 property = new IntegerProperty(state.a(), ImmutableList.copyOf(state.d()));
             } else {
                 throw new IllegalArgumentException("WorldEdit needs an update to support " + state.getClass().getSimpleName());
             }
-            properties.put(state.a(), property);
+
+            properties.put(property.getName(), property);
         }
         return properties;
     }
