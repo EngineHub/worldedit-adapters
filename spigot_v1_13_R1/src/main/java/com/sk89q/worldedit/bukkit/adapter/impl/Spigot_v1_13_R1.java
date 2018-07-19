@@ -38,7 +38,7 @@ import com.sk89q.jnbt.ShortTag;
 import com.sk89q.jnbt.StringTag;
 import com.sk89q.jnbt.Tag;
 import com.sk89q.worldedit.blocks.BaseBlock;
-import com.sk89q.worldedit.bukkit.BukkitUtil;
+import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.bukkit.adapter.BukkitImplAdapter;
 import com.sk89q.worldedit.entity.BaseEntity;
 import com.sk89q.worldedit.internal.Constants;
@@ -221,7 +221,7 @@ public final class Spigot_v1_13_R1 implements BukkitImplAdapter {
         int z = location.getBlockZ();
 
         org.bukkit.block.Block bukkitBlock = location.getBlock();
-        BlockState state = BukkitUtil.toBlock(bukkitBlock.getBlockData());
+        BlockState state = BukkitAdapter.adapt(bukkitBlock.getBlockData());
 
         // Read the NBT data
         TileEntity te = craftWorld.getHandle().getTileEntity(new BlockPosition(x, y, z));
@@ -247,7 +247,7 @@ public final class Spigot_v1_13_R1 implements BukkitImplAdapter {
         // Two pass update:
         // Note, this will notify blocks BEFORE the tile entity is set
 
-        location.getBlock().setBlockData(BukkitUtil.toBlock(state), notifyAndLight);
+        location.getBlock().setBlockData(BukkitAdapter.adapt(state), notifyAndLight);
 
         // Copy NBT data for the block
         if (state instanceof BaseBlock) {
