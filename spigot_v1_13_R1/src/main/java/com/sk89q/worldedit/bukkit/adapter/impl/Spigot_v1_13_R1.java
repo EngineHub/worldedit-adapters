@@ -281,7 +281,7 @@ public final class Spigot_v1_13_R1 implements BukkitImplAdapter {
         if (id != null) {
             NBTTagCompound tag = new NBTTagCompound();
             readEntityIntoTag(mcEntity, tag);
-            return new BaseEntity(id, (CompoundTag) toNative(tag));
+            return new BaseEntity(com.sk89q.worldedit.world.entity.EntityTypes.get(id), (CompoundTag) toNative(tag));
         } else {
             return null;
         }
@@ -296,7 +296,7 @@ public final class Spigot_v1_13_R1 implements BukkitImplAdapter {
         CraftWorld craftWorld = ((CraftWorld) location.getWorld());
         WorldServer worldServer = craftWorld.getHandle();
 
-        Entity createdEntity = createEntityFromId(state.getTypeId(), craftWorld.getHandle());
+        Entity createdEntity = createEntityFromId(state.getType().getId(), craftWorld.getHandle());
 
         if (createdEntity != null) {
             CompoundTag nativeTag = state.getNbtData();
