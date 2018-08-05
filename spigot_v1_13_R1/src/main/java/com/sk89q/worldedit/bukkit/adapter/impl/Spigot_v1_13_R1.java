@@ -417,7 +417,7 @@ public final class Spigot_v1_13_R1 implements BukkitImplAdapter {
      */
     private ListTag toNativeList(NBTTagList foreign) throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
         List<Tag> values = new ArrayList<>();
-        int type = foreign.getTypeId();
+        int type = foreign.d();
 
         List foreignList;
         foreignList = (List) nbtListTagListField.get(foreign);
