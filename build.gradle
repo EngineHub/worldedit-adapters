@@ -42,6 +42,6 @@ subprojects {
 
 project(':spigot_v1_13_R1') {
     dependencies {
-        compile "org.bukkit:craftbukkit:1.13-pre7-R0.1-SNAPSHOT"
+        compile "org.bukkit:craftbukkit:1.13-R0.1-SNAPSHOT"
     }
 }

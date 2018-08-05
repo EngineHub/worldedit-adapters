@@ -32,6 +32,7 @@ import com.sk89q.jnbt.FloatTag;
 import com.sk89q.jnbt.IntArrayTag;
 import com.sk89q.jnbt.IntTag;
 import com.sk89q.jnbt.ListTag;
+import com.sk89q.jnbt.LongArrayTag;
 import com.sk89q.jnbt.LongTag;
 import com.sk89q.jnbt.NBTConstants;
 import com.sk89q.jnbt.ShortTag;
@@ -76,6 +77,7 @@ import net.minecraft.server.v1_13_R1.NBTTagInt;
 import net.minecraft.server.v1_13_R1.NBTTagIntArray;
 import net.minecraft.server.v1_13_R1.NBTTagList;
 import net.minecraft.server.v1_13_R1.NBTTagLong;
+import net.minecraft.server.v1_13_R1.NBTTagLongArray;
 import net.minecraft.server.v1_13_R1.NBTTagShort;
 import net.minecraft.server.v1_13_R1.NBTTagString;
 import net.minecraft.server.v1_13_R1.TileEntity;
@@ -381,6 +383,8 @@ public final class Spigot_v1_13_R1 implements BukkitImplAdapter {
             return new IntTag(((NBTTagInt) foreign).e()); // getInt
         } else if (foreign instanceof NBTTagIntArray) {
             return new IntArrayTag(((NBTTagIntArray) foreign).d()); // data
+        } else if (foreign instanceof NBTTagLongArray) {
+            return new LongArrayTag(((NBTTagLongArray) foreign).d()); // data
         } else if (foreign instanceof NBTTagList) {
             try {
                 return toNativeList((NBTTagList) foreign);
@@ -455,6 +459,8 @@ public final class Spigot_v1_13_R1 implements BukkitImplAdapter {
             return new NBTTagInt(((IntTag) foreign).getValue());
         } else if (foreign instanceof IntArrayTag) {
             return new NBTTagIntArray(((IntArrayTag) foreign).getValue());
+        } else if (foreign instanceof LongArrayTag) {
+            return new NBTTagLongArray(((LongArrayTag) foreign).getValue());
         } else if (foreign instanceof ListTag) {
             NBTTagList tag = new NBTTagList();
             ListTag foreignList = (ListTag) foreign;
