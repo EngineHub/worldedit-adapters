@@ -38,7 +38,6 @@ import com.sk89q.jnbt.NBTConstants;
 import com.sk89q.jnbt.ShortTag;
 import com.sk89q.jnbt.StringTag;
 import com.sk89q.jnbt.Tag;
-import com.sk89q.worldedit.blocks.BaseBlock;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.bukkit.adapter.BukkitImplAdapter;
 import com.sk89q.worldedit.entity.BaseEntity;
@@ -49,6 +48,7 @@ import com.sk89q.worldedit.registry.state.EnumProperty;
 import com.sk89q.worldedit.registry.state.IntegerProperty;
 import com.sk89q.worldedit.registry.state.Property;
 import com.sk89q.worldedit.util.Direction;
+import com.sk89q.worldedit.world.block.BaseBlock;
 import com.sk89q.worldedit.world.block.BlockState;
 import com.sk89q.worldedit.world.block.BlockStateHolder;
 import com.sk89q.worldedit.world.block.BlockType;
@@ -119,8 +119,6 @@ public final class Spigot_v1_13_R1 implements BukkitImplAdapter {
     public Spigot_v1_13_R1() throws NoSuchFieldException, NoSuchMethodException {
         // A simple test
         CraftServer.class.cast(Bukkit.getServer());
-        // test between 1.12 and 1.12.1 since md_5 didn't update revision numbers
-        TileEntity.class.getDeclaredMethod("load", NBTTagCompound.class);
 
         // The list of tags on an NBTTagList
         nbtListTagListField = NBTTagList.class.getDeclaredField("list");
@@ -230,10 +228,10 @@ public final class Spigot_v1_13_R1 implements BukkitImplAdapter {
         if (te != null) {
             NBTTagCompound tag = new NBTTagCompound();
             readTileEntityIntoTag(te, tag); // Load data
-            return new BaseBlock(state, (CompoundTag) toNative(tag));
+            return state.toBaseBlock((CompoundTag) toNative(tag));
         }
 
-        return new BaseBlock(state);
+        return state.toBaseBlock();
     }
 
     @Override
