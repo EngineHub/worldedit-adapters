@@ -38,6 +38,7 @@ import com.sk89q.jnbt.NBTConstants;
 import com.sk89q.jnbt.ShortTag;
 import com.sk89q.jnbt.StringTag;
 import com.sk89q.jnbt.Tag;
+import com.sk89q.worldedit.Vector;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.bukkit.adapter.BukkitImplAdapter;
 import com.sk89q.worldedit.entity.BaseEntity;
@@ -80,6 +81,7 @@ import net.minecraft.server.v1_13_R1.NBTTagLong;
 import net.minecraft.server.v1_13_R1.NBTTagLongArray;
 import net.minecraft.server.v1_13_R1.NBTTagShort;
 import net.minecraft.server.v1_13_R1.NBTTagString;
+import net.minecraft.server.v1_13_R1.PacketPlayOutTileEntityData;
 import net.minecraft.server.v1_13_R1.TileEntity;
 import net.minecraft.server.v1_13_R1.World;
 import net.minecraft.server.v1_13_R1.WorldServer;
@@ -90,6 +92,7 @@ import org.bukkit.craftbukkit.v1_13_R1.CraftServer;
 import org.bukkit.craftbukkit.v1_13_R1.CraftWorld;
 import org.bukkit.craftbukkit.v1_13_R1.block.CraftBlock;
 import org.bukkit.craftbukkit.v1_13_R1.entity.CraftEntity;
+import org.bukkit.craftbukkit.v1_13_R1.entity.CraftPlayer;
 import org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason;
 
 import java.lang.reflect.Field;
@@ -346,6 +349,15 @@ public final class Spigot_v1_13_R1 implements BukkitImplAdapter {
             properties.put(property.getName(), property);
         }
         return properties;
+    }
+
+    @Override
+    public void sendFakeNBT(org.bukkit.entity.Player player, Vector pos, CompoundTag nbtData) {
+        ((CraftPlayer) player).getHandle().playerConnection.sendPacket(new PacketPlayOutTileEntityData(
+                new BlockPosition(pos.getBlockX(), pos.getBlockY(), pos.getBlockZ()),
+                7,
+                (NBTTagCompound) fromNative(nbtData)
+        ));
     }
 
     /**
