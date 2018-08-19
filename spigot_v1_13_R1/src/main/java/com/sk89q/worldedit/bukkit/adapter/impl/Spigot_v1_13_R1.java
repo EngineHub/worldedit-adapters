@@ -81,6 +81,7 @@ import net.minecraft.server.v1_13_R1.NBTTagLong;
 import net.minecraft.server.v1_13_R1.NBTTagLongArray;
 import net.minecraft.server.v1_13_R1.NBTTagShort;
 import net.minecraft.server.v1_13_R1.NBTTagString;
+import net.minecraft.server.v1_13_R1.PacketPlayOutEntityStatus;
 import net.minecraft.server.v1_13_R1.PacketPlayOutTileEntityData;
 import net.minecraft.server.v1_13_R1.TileEntity;
 import net.minecraft.server.v1_13_R1.World;
@@ -93,6 +94,7 @@ import org.bukkit.craftbukkit.v1_13_R1.CraftWorld;
 import org.bukkit.craftbukkit.v1_13_R1.block.CraftBlock;
 import org.bukkit.craftbukkit.v1_13_R1.entity.CraftEntity;
 import org.bukkit.craftbukkit.v1_13_R1.entity.CraftPlayer;
+import org.bukkit.entity.Player;
 import org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason;
 
 import java.lang.reflect.Field;
@@ -357,6 +359,13 @@ public final class Spigot_v1_13_R1 implements BukkitImplAdapter {
                 new BlockPosition(pos.getBlockX(), pos.getBlockY(), pos.getBlockZ()),
                 7,
                 (NBTTagCompound) fromNative(nbtData)
+        ));
+    }
+
+    @Override
+    public void sendFakeOP(Player player) {
+        ((CraftPlayer) player).getHandle().playerConnection.sendPacket(new PacketPlayOutEntityStatus(
+                ((CraftPlayer) player).getHandle(), (byte) 28
         ));
     }
 
