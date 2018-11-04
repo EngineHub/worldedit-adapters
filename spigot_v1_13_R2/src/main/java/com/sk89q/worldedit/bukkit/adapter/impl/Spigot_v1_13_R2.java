@@ -38,11 +38,11 @@ import com.sk89q.jnbt.NBTConstants;
 import com.sk89q.jnbt.ShortTag;
 import com.sk89q.jnbt.StringTag;
 import com.sk89q.jnbt.Tag;
-import com.sk89q.worldedit.Vector;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.bukkit.adapter.BukkitImplAdapter;
 import com.sk89q.worldedit.entity.BaseEntity;
 import com.sk89q.worldedit.internal.Constants;
+import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.registry.state.BooleanProperty;
 import com.sk89q.worldedit.registry.state.DirectionalProperty;
 import com.sk89q.worldedit.registry.state.EnumProperty;
@@ -355,7 +355,7 @@ public final class Spigot_v1_13_R2 implements BukkitImplAdapter {
     }
 
     @Override
-    public void sendFakeNBT(org.bukkit.entity.Player player, Vector pos, CompoundTag nbtData) {
+    public void sendFakeNBT(org.bukkit.entity.Player player, BlockVector3 pos, CompoundTag nbtData) {
         ((CraftPlayer) player).getHandle().playerConnection.sendPacket(new PacketPlayOutTileEntityData(
                 new BlockPosition(pos.getBlockX(), pos.getBlockY(), pos.getBlockZ()),
                 7,
