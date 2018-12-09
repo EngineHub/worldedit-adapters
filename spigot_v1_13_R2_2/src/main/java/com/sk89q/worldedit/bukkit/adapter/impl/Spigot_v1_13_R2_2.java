@@ -93,6 +93,7 @@ import org.bukkit.block.Biome;
 import org.bukkit.craftbukkit.v1_13_R2.CraftServer;
 import org.bukkit.craftbukkit.v1_13_R2.CraftWorld;
 import org.bukkit.craftbukkit.v1_13_R2.block.CraftBlock;
+import org.bukkit.craftbukkit.v1_13_R2.block.data.CraftBlockData;
 import org.bukkit.craftbukkit.v1_13_R2.entity.CraftEntity;
 import org.bukkit.craftbukkit.v1_13_R2.entity.CraftPlayer;
 import org.bukkit.entity.Player;
@@ -276,6 +277,18 @@ public final class Spigot_v1_13_R2_2 implements BukkitImplAdapter {
         }
 
         return true;
+    }
+
+    @Override
+    public void notifyAndLightBlock(Location position, BlockState previousType) {
+        CraftWorld craftWorld = ((CraftWorld) position.getWorld());
+
+        BlockPosition blockPosition = new BlockPosition(position.getBlockX(), position.getBlockY(), position.getBlockZ());
+        IBlockData oldData = ((CraftBlockData) BukkitAdapter.adapt(previousType)).getState();
+        IBlockData newData = craftWorld.getHandle().i(blockPosition);
+
+        //        craftWorld.getHandle().r(blockPosition); // Re-light
+        craftWorld.getHandle().notifyAndUpdatePhysics(blockPosition, null, oldData, newData, newData, 1 | 2); // Update
     }
 
     @Override
