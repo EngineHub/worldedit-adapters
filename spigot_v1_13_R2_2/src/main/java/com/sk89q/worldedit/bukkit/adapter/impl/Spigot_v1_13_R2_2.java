@@ -111,7 +111,7 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
-public final class Spigot_v1_13_R2 implements BukkitImplAdapter {
+public final class Spigot_v1_13_R2_2 implements BukkitImplAdapter {
 
     private final Logger logger = Logger.getLogger(getClass().getCanonicalName());
 
@@ -122,7 +122,7 @@ public final class Spigot_v1_13_R2 implements BukkitImplAdapter {
     // Code that may break between versions of Minecraft
     // ------------------------------------------------------------------------
 
-    public Spigot_v1_13_R2() throws NoSuchFieldException, NoSuchMethodException {
+    public Spigot_v1_13_R2_2() throws NoSuchFieldException, NoSuchMethodException {
         // A simple test
         CraftServer.class.cast(Bukkit.getServer());
 
@@ -135,7 +135,7 @@ public final class Spigot_v1_13_R2 implements BukkitImplAdapter {
         nbtCreateTagMethod.setAccessible(true);
 
         // Spigot broke names mid-version, this is a test to see if it's before or after.
-        new NBTTagString("test").b_();
+        new NBTTagString("test").asString();
     }
 
     /**
@@ -395,15 +395,15 @@ public final class Spigot_v1_13_R2 implements BukkitImplAdapter {
             }
             return new CompoundTag(values);
         } else if (foreign instanceof NBTTagByte) {
-            return new ByteTag(((NBTTagByte) foreign).g()); // getByte
+            return new ByteTag(((NBTTagByte) foreign).asByte());
         } else if (foreign instanceof NBTTagByteArray) {
             return new ByteArrayTag(((NBTTagByteArray) foreign).c()); // data
         } else if (foreign instanceof NBTTagDouble) {
             return new DoubleTag(((NBTTagDouble) foreign).asDouble()); // getDouble
         } else if (foreign instanceof NBTTagFloat) {
-            return new FloatTag(((NBTTagFloat) foreign).i()); // getFloat
+            return new FloatTag(((NBTTagFloat) foreign).asFloat());
         } else if (foreign instanceof NBTTagInt) {
-            return new IntTag(((NBTTagInt) foreign).e()); // getInt
+            return new IntTag(((NBTTagInt) foreign).asInt());
         } else if (foreign instanceof NBTTagIntArray) {
             return new IntArrayTag(((NBTTagIntArray) foreign).d()); // data
         } else if (foreign instanceof NBTTagLongArray) {
@@ -416,11 +416,11 @@ public final class Spigot_v1_13_R2 implements BukkitImplAdapter {
                 return new ListTag(ByteTag.class, new ArrayList<ByteTag>());
             }
         } else if (foreign instanceof NBTTagLong) {
-            return new LongTag(((NBTTagLong) foreign).d()); // getLong
+            return new LongTag(((NBTTagLong) foreign).asLong());
         } else if (foreign instanceof NBTTagShort) {
-            return new ShortTag(((NBTTagShort) foreign).f()); // getShort
+            return new ShortTag(((NBTTagShort) foreign).asShort());
         } else if (foreign instanceof NBTTagString) {
-            return new StringTag(foreign.b_()); // data
+            return new StringTag(foreign.asString());
         } else if (foreign instanceof NBTTagEnd) {
             return new EndTag();
         } else {
