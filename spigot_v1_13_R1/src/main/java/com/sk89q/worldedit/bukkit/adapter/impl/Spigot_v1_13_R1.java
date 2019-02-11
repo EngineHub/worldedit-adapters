@@ -61,8 +61,10 @@ import net.minecraft.server.v1_13_R1.BlockStateDirection;
 import net.minecraft.server.v1_13_R1.BlockStateEnum;
 import net.minecraft.server.v1_13_R1.BlockStateInteger;
 import net.minecraft.server.v1_13_R1.BlockStateList;
+import net.minecraft.server.v1_13_R1.Chunk;
 import net.minecraft.server.v1_13_R1.Entity;
 import net.minecraft.server.v1_13_R1.EntityTypes;
+import net.minecraft.server.v1_13_R1.EnumDirection;
 import net.minecraft.server.v1_13_R1.IBlockData;
 import net.minecraft.server.v1_13_R1.IBlockState;
 import net.minecraft.server.v1_13_R1.INamable;
@@ -250,29 +252,78 @@ public final class Spigot_v1_13_R1 implements BukkitImplAdapter {
         int y = location.getBlockY();
         int z = location.getBlockZ();
 
-        // Two pass update:
-        // Note, this will notify blocks BEFORE the tile entity is set
+        // First set the block
+        Chunk chunk = craftWorld.getHandle().getChunkAt(x >> 4, z >> 4);
+        BlockPosition pos = new BlockPosition(x, y, z);
+        IBlockData old = chunk.getBlockData(x, y, z);
+        Block mcBlock = Block.REGISTRY.get(MinecraftKey.a(state.getBlockType().getId()));
+        IBlockData newState = mcBlock.getBlockData();
+        Map<Property<?>, Object> states = state.getStates();
+        newState = applyProperties(mcBlock.getStates(), newState, states);
+        IBlockData successState = chunk.a(pos, newState, false);
+        boolean successful = successState != null;
 
-        location.getBlock().setBlockData(BukkitAdapter.adapt(state), notifyAndLight);
-
-        // Copy NBT data for the block
-        if (state instanceof BaseBlock) {
-            CompoundTag nativeTag = ((BaseBlock) state).getNbtData();
-            if (nativeTag != null) {
-                // We will assume that the tile entity was created for us,
-                // though we do not do this on the Forge version
-                TileEntity tileEntity = craftWorld.getHandle().getTileEntity(new BlockPosition(x, y, z));
-                if (tileEntity != null) {
-                    NBTTagCompound tag = (NBTTagCompound) fromNative(nativeTag);
-                    tag.set("x", new NBTTagInt(x));
-                    tag.set("y", new NBTTagInt(y));
-                    tag.set("z", new NBTTagInt(z));
-                    readTagIntoTileEntity(tag, tileEntity); // Load data
+        // Create the TileEntity
+        if (successful) {
+            if (state instanceof BaseBlock) {
+                CompoundTag nativeTag = ((BaseBlock) state).getNbtData();
+                if (nativeTag != null) {
+                    // We will assume that the tile entity was created for us,
+                    // though we do not do this on the Forge version
+                    TileEntity tileEntity = craftWorld.getHandle().getTileEntity(pos);
+                    if (tileEntity != null) {
+                        NBTTagCompound tag = (NBTTagCompound) fromNative(nativeTag);
+                        tag.set("x", new NBTTagInt(x));
+                        tag.set("y", new NBTTagInt(y));
+                        tag.set("z", new NBTTagInt(z));
+                        readTagIntoTileEntity(tag, tileEntity); // Load data
+                    }
                 }
             }
         }
 
-        return true;
+        if (notifyAndLight) {
+            if (!successful) {
+                newState = old;
+            }
+            craftWorld.getHandle().r(pos);
+            craftWorld.getHandle().notifyAndUpdatePhysics(pos, chunk, old, newState, newState, 1 | 2);
+        }
+
+        return successful;
+    }
+
+    private static EnumDirection adapt(Direction face) {
+        switch (face) {
+            case NORTH: return EnumDirection.NORTH;
+            case SOUTH: return EnumDirection.SOUTH;
+            case WEST: return EnumDirection.WEST;
+            case EAST: return EnumDirection.EAST;
+            case DOWN: return EnumDirection.DOWN;
+            case UP:
+            default:
+                return EnumDirection.UP;
+        }
+    }
+
+    private IBlockData applyProperties(BlockStateList<Block, IBlockData> stateContainer, IBlockData newState, Map<Property<?>, Object> states) {
+        for (Map.Entry<Property<?>, Object> state : states.entrySet()) {
+            IBlockState<?> property = stateContainer.a(state.getKey().getName());
+            Comparable<?> value = (Comparable) state.getValue();
+            // we may need to adapt this value, depending on the source prop
+            if (property instanceof BlockStateDirection) {
+                Direction dir = (Direction) value;
+                value = adapt(dir);
+            } else if (property instanceof BlockStateEnum) {
+                String enumName = (String) value;
+                value = ((BlockStateEnum<?>) property).b((String) value).orElseGet(() -> {
+                    throw new IllegalStateException("Enum property " + property.a() + " does not contain " + enumName);
+                });
+            }
+
+            newState = newState.set(property, (Comparable) value);
+        }
+        return newState;
     }
 
     @Override
@@ -337,8 +388,8 @@ public final class Spigot_v1_13_R1 implements BukkitImplAdapter {
 
     @SuppressWarnings("unchecked")
     @Override
-    public Map<String, ? extends Property> getProperties(BlockType blockType) {
-        Map<String, Property> properties = Maps.newTreeMap(String::compareTo);
+    public Map<String, ? extends Property<?>> getProperties(BlockType blockType) {
+        Map<String, Property<?>> properties = Maps.newTreeMap(String::compareTo);
         Block block = Block.getByName(blockType.getId());
         if (block == null) {
             logger.warning("Failed to find properties for " + blockType.getId());
