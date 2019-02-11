@@ -321,7 +321,7 @@ public final class Spigot_v1_13_R1 implements BukkitImplAdapter {
                 });
             }
 
-            newState = newState.set(property, (Comparable) value);
+            newState = newState.set((IBlockState) property, (Comparable) value);
         }
         return newState;
     }
