@@ -316,9 +316,10 @@ public final class Spigot_v1_13_R1 implements BukkitImplAdapter {
                 value = adapt(dir);
             } else if (property instanceof BlockStateEnum) {
                 String enumName = (String) value;
-                value = ((BlockStateEnum<?>) property).b((String) value).orElseGet(() -> {
+                value = ((BlockStateEnum<?>) property).b((String) value).orElse(null);
+                if (value == null) {
                     throw new IllegalStateException("Enum property " + property.a() + " does not contain " + enumName);
-                });
+                }
             }
 
             newState = newState.set((IBlockState) property, (Comparable) value);
