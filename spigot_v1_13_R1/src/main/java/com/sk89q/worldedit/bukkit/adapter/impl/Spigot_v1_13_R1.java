@@ -294,16 +294,18 @@ public final class Spigot_v1_13_R1 implements BukkitImplAdapter {
     }
 
     private static EnumDirection adapt(Direction face) {
-        switch (face) {
-            case NORTH: return EnumDirection.NORTH;
-            case SOUTH: return EnumDirection.SOUTH;
-            case WEST: return EnumDirection.WEST;
-            case EAST: return EnumDirection.EAST;
-            case DOWN: return EnumDirection.DOWN;
-            case UP:
-            default:
-                return EnumDirection.UP;
+        if (face == Direction.NORTH) {
+            return EnumDirection.NORTH;
+        } else if (face == Direction.SOUTH) {
+            return EnumDirection.SOUTH;
+        } else if (face == Direction.WEST) {
+            return EnumDirection.WEST;
+        } else if (face == Direction.EAST) {
+            return EnumDirection.EAST;
+        } else if (face == Direction.DOWN) {
+            return EnumDirection.DOWN;
         }
+        return EnumDirection.UP;
     }
 
     private IBlockData applyProperties(BlockStateList<Block, IBlockData> stateContainer, IBlockData newState, Map<Property<?>, Object> states) {
@@ -316,10 +318,7 @@ public final class Spigot_v1_13_R1 implements BukkitImplAdapter {
                 value = adapt(dir);
             } else if (property instanceof BlockStateEnum) {
                 String enumName = (String) value;
-                value = ((BlockStateEnum<?>) property).b((String) value).orElse(null);
-                if (value == null) {
-                    throw new IllegalStateException("Enum property " + property.a() + " does not contain " + enumName);
-                }
+                value = ((BlockStateEnum<?>) property).b((String) value).orElseThrow(() -> new IllegalStateException("Enum property " + property.a() + " does not contain " + enumName));
             }
 
             newState = newState.set((IBlockState) property, (Comparable) value);
