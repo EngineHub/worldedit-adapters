@@ -53,7 +53,6 @@ import com.sk89q.worldedit.world.block.BaseBlock;
 import com.sk89q.worldedit.world.block.BlockState;
 import com.sk89q.worldedit.world.block.BlockStateHolder;
 import com.sk89q.worldedit.world.block.BlockType;
-import net.minecraft.server.v1_13_R1.BiomeBase;
 import net.minecraft.server.v1_13_R1.Block;
 import net.minecraft.server.v1_13_R1.BlockPosition;
 import net.minecraft.server.v1_13_R1.BlockStateBoolean;
@@ -90,10 +89,8 @@ import net.minecraft.server.v1_13_R1.World;
 import net.minecraft.server.v1_13_R1.WorldServer;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.block.Biome;
 import org.bukkit.craftbukkit.v1_13_R1.CraftServer;
 import org.bukkit.craftbukkit.v1_13_R1.CraftWorld;
-import org.bukkit.craftbukkit.v1_13_R1.block.CraftBlock;
 import org.bukkit.craftbukkit.v1_13_R1.block.data.CraftBlockData;
 import org.bukkit.craftbukkit.v1_13_R1.entity.CraftEntity;
 import org.bukkit.craftbukkit.v1_13_R1.entity.CraftPlayer;
@@ -202,23 +199,6 @@ public final class Spigot_v1_13_R1 implements BukkitImplAdapter {
         entity.save(tag);
     }
 
-    // ------------------------------------------------------------------------
-    // Code that is less likely to break
-    // ------------------------------------------------------------------------
-
-    @Override
-    public int getBiomeId(Biome biome) {
-        BiomeBase mcBiome = CraftBlock.biomeToBiomeBase(biome);
-        return mcBiome != null ? BiomeBase.a(mcBiome) : 0;
-    }
-
-    @Override
-    public Biome getBiome(int id) {
-        BiomeBase mcBiome = BiomeBase.getBiome(id);
-        return CraftBlock.biomeBaseToBiome(mcBiome); // Defaults to ocean if it's an invalid ID
-    }
-
-    @SuppressWarnings("deprecation")
     @Override
     public BaseBlock getBlock(Location location) {
         checkNotNull(location);
@@ -334,7 +314,7 @@ public final class Spigot_v1_13_R1 implements BukkitImplAdapter {
         IBlockData oldData = ((CraftBlockData) BukkitAdapter.adapt(previousType)).getState();
         IBlockData newData = craftWorld.getHandle().i(blockPosition);
 
-//        craftWorld.getHandle().r(blockPosition); // Re-light
+        //        craftWorld.getHandle().r(blockPosition); // Re-light
         craftWorld.getHandle().notifyAndUpdatePhysics(blockPosition, null, oldData, newData, newData, 1 | 2); // Update
     }
 
@@ -432,6 +412,10 @@ public final class Spigot_v1_13_R1 implements BukkitImplAdapter {
                 ((CraftPlayer) player).getHandle(), (byte) 28
         ));
     }
+
+    // ------------------------------------------------------------------------
+    // Code that is less likely to break
+    // ------------------------------------------------------------------------
 
     /**
      * Converts from a non-native NMS NBT structure to a native WorldEdit NBT

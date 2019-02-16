@@ -53,7 +53,6 @@ import com.sk89q.worldedit.world.block.BaseBlock;
 import com.sk89q.worldedit.world.block.BlockState;
 import com.sk89q.worldedit.world.block.BlockStateHolder;
 import com.sk89q.worldedit.world.block.BlockType;
-import net.minecraft.server.v1_13_R2.BiomeBase;
 import net.minecraft.server.v1_13_R2.Block;
 import net.minecraft.server.v1_13_R2.BlockPosition;
 import net.minecraft.server.v1_13_R2.BlockStateBoolean;
@@ -91,10 +90,8 @@ import net.minecraft.server.v1_13_R2.World;
 import net.minecraft.server.v1_13_R2.WorldServer;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.block.Biome;
 import org.bukkit.craftbukkit.v1_13_R2.CraftServer;
 import org.bukkit.craftbukkit.v1_13_R2.CraftWorld;
-import org.bukkit.craftbukkit.v1_13_R2.block.CraftBlock;
 import org.bukkit.craftbukkit.v1_13_R2.block.data.CraftBlockData;
 import org.bukkit.craftbukkit.v1_13_R2.entity.CraftEntity;
 import org.bukkit.craftbukkit.v1_13_R2.entity.CraftPlayer;
@@ -206,23 +203,6 @@ public final class Spigot_v1_13_R2_2 implements BukkitImplAdapter {
         entity.save(tag);
     }
 
-    // ------------------------------------------------------------------------
-    // Code that is less likely to break
-    // ------------------------------------------------------------------------
-
-    @Override
-    public int getBiomeId(Biome biome) {
-        BiomeBase mcBiome = CraftBlock.biomeToBiomeBase(biome);
-        return mcBiome != null ? IRegistry.BIOME.a(mcBiome) : 0;
-    }
-
-    @Override
-    public Biome getBiome(int id) {
-        BiomeBase mcBiome = IRegistry.BIOME.fromId(id);
-        return CraftBlock.biomeBaseToBiome(mcBiome); // Defaults to ocean if it's an invalid ID
-    }
-
-    @SuppressWarnings("deprecation")
     @Override
     public BaseBlock getBlock(Location location) {
         checkNotNull(location);
@@ -436,6 +416,10 @@ public final class Spigot_v1_13_R2_2 implements BukkitImplAdapter {
                 ((CraftPlayer) player).getHandle(), (byte) 28
         ));
     }
+
+    // ------------------------------------------------------------------------
+    // Code that is less likely to break
+    // ------------------------------------------------------------------------
 
     /**
      * Converts from a non-native NMS NBT structure to a native WorldEdit NBT
