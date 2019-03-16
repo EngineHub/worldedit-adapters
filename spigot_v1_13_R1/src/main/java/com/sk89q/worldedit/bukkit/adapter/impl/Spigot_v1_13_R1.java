@@ -244,7 +244,7 @@ public final class Spigot_v1_13_R1 implements BukkitImplAdapter {
         boolean successful = successState != null;
 
         // Create the TileEntity
-        if (successful) {
+        if (successful || old == newState) {
             if (state instanceof BaseBlock) {
                 CompoundTag nativeTag = ((BaseBlock) state).getNbtData();
                 if (nativeTag != null) {
@@ -262,11 +262,8 @@ public final class Spigot_v1_13_R1 implements BukkitImplAdapter {
             }
         }
 
-        if (notifyAndLight) {
-            if (!successful) {
-                newState = old;
-            }
-            craftWorld.getHandle().r(pos);
+        if (successful && notifyAndLight) {
+            // craftWorld.getHandle().r(pos);
             craftWorld.getHandle().notifyAndUpdatePhysics(pos, chunk, old, newState, newState, 1 | 2);
         }
 
