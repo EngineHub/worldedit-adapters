@@ -267,7 +267,7 @@ public final class Spigot_v1_13_R2 implements BukkitImplAdapter {
         }
 
         if (successful && notifyAndLight) {
-            // craftWorld.getHandle().r(pos);
+            craftWorld.getHandle().r(pos);
             craftWorld.getHandle().notifyAndUpdatePhysics(pos, chunk, old, newState, newState, 1 | 2);
         }
 
