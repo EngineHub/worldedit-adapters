@@ -57,3 +57,9 @@ project(':spigot_v1_13_R2_2') {
         compile "org.bukkit:craftbukkit:1.13.2-R0.1-SNAPSHOT"
     }
 }
+
+project(':spigot_v1_14_R1') {
+    dependencies {
+        compile "org.bukkit:craftbukkit:1.14-R0.1-SNAPSHOT"
+    }
+}

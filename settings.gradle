@@ -19,4 +19,4 @@
 
 rootProject.name = 'worldedit-adapters'
 
-include 'spigot_v1_13_R1', 'spigot_v1_13_R2', 'spigot_v1_13_R2_2'
+include 'spigot_v1_13_R1', 'spigot_v1_13_R2', 'spigot_v1_13_R2_2', 'spigot_v1_14_R1'
