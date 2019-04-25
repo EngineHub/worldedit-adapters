@@ -95,6 +95,7 @@ import org.bukkit.craftbukkit.v1_13_R2.CraftWorld;
 import org.bukkit.craftbukkit.v1_13_R2.block.data.CraftBlockData;
 import org.bukkit.craftbukkit.v1_13_R2.entity.CraftEntity;
 import org.bukkit.craftbukkit.v1_13_R2.entity.CraftPlayer;
+import org.bukkit.craftbukkit.v1_13_R2.util.CraftMagicNumbers;
 import org.bukkit.entity.Player;
 import org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason;
 
@@ -136,6 +137,11 @@ public final class Spigot_v1_13_R2_2 implements BukkitImplAdapter {
 
         // Spigot broke names mid-version, this is a test to see if it's before or after.
         new NBTTagString("test").asString();
+    }
+
+    @Override
+    public int getDataVersion() {
+        return CraftMagicNumbers.INSTANCE.getDataVersion();
     }
 
     /**
