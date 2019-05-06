@@ -28,7 +28,6 @@ subprojects {
     repositories {
         mavenLocal()
         mavenCentral()
-        maven { url "http://repo.bukkit.org/content/groups/public" }
         maven { url "http://maven.sk89q.com/repo/" }
     }
 
