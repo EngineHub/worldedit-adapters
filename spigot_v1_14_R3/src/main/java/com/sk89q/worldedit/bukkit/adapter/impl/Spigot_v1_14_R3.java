@@ -45,6 +45,7 @@ import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.bukkit.adapter.BukkitImplAdapter;
 import com.sk89q.worldedit.entity.BaseEntity;
 import com.sk89q.worldedit.internal.Constants;
+import com.sk89q.worldedit.internal.block.BlockStateIdAccess;
 import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.registry.state.BooleanProperty;
 import com.sk89q.worldedit.registry.state.DirectionalProperty;
@@ -57,6 +58,7 @@ import com.sk89q.worldedit.world.block.BaseBlock;
 import com.sk89q.worldedit.world.block.BlockState;
 import com.sk89q.worldedit.world.block.BlockStateHolder;
 import com.sk89q.worldedit.world.block.BlockType;
+import com.sk89q.worldedit.world.block.BlockTypes;
 import net.minecraft.server.v1_14_R1.Block;
 import net.minecraft.server.v1_14_R1.BlockPosition;
 import net.minecraft.server.v1_14_R1.BlockStateBoolean;
@@ -117,6 +119,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalInt;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
@@ -231,6 +234,16 @@ public final class Spigot_v1_14_R3 implements BukkitImplAdapter {
     }
 
     @Override
+    public OptionalInt getInternalBlockStateId(BlockState state) {
+        Block mcBlock = IRegistry.BLOCK.get(MinecraftKey.a(state.getBlockType().getId()));
+        IBlockData newState = mcBlock.getBlockData();
+        Map<Property<?>, Object> states = state.getStates();
+        newState = applyProperties(mcBlock.getStates(), newState, states);
+        final int combinedId = Block.getCombinedId(newState);
+        return combinedId == 0 && state.getBlockType() != BlockTypes.AIR ? OptionalInt.empty() : OptionalInt.of(combinedId);
+    }
+
+    @Override
     public BaseBlock getBlock(Location location) {
         checkNotNull(location);
 
@@ -239,11 +252,19 @@ public final class Spigot_v1_14_R3 implements BukkitImplAdapter {
         int y = location.getBlockY();
         int z = location.getBlockZ();
 
-        org.bukkit.block.Block bukkitBlock = location.getBlock();
-        BlockState state = BukkitAdapter.adapt(bukkitBlock.getBlockData());
+        final WorldServer handle = craftWorld.getHandle();
+        Chunk chunk = handle.getChunkAt(x >> 4, z >> 4);
+        final BlockPosition blockPos = new BlockPosition(x, y, z);
+        final IBlockData blockData = chunk.getType(blockPos);
+        int internalId = Block.getCombinedId(blockData);
+        BlockState state = BlockStateIdAccess.getBlockStateById(internalId);
+        if (state == null) {
+            org.bukkit.block.Block bukkitBlock = location.getBlock();
+            state = BukkitAdapter.adapt(bukkitBlock.getBlockData());
+        }
 
         // Read the NBT data
-        TileEntity te = craftWorld.getHandle().getTileEntity(new BlockPosition(x, y, z));
+        TileEntity te = chunk.a(blockPos, Chunk.EnumTileEntityState.CHECK);
         if (te != null) {
             NBTTagCompound tag = new NBTTagCompound();
             readTileEntityIntoTag(te, tag); // Load data
@@ -265,13 +286,19 @@ public final class Spigot_v1_14_R3 implements BukkitImplAdapter {
 
         // First set the block
         Chunk chunk = craftWorld.getHandle().getChunkAt(x >> 4, z >> 4);
-        BlockPosition pos = new BlockPosition(x, y, z);
-        IBlockData old = chunk.getType(pos);
-        Block mcBlock = IRegistry.BLOCK.get(MinecraftKey.a(state.getBlockType().getId()));
-        IBlockData newState = mcBlock.getBlockData();
-        Map<Property<?>, Object> states = state.getStates();
-        newState = applyProperties(mcBlock.getStates(), newState, states);
-        IBlockData successState = chunk.setType(pos, newState, false);
+        BlockPosition blockPos = new BlockPosition(x, y, z);
+        IBlockData old = chunk.getType(blockPos);
+        IBlockData newState;
+        final OptionalInt blockStateId = BlockStateIdAccess.getBlockStateId(state.toImmutableState());
+        if (blockStateId.isPresent()) {
+            newState = Block.getByCombinedId(blockStateId.getAsInt());
+        } else {
+            Block mcBlock = IRegistry.BLOCK.get(MinecraftKey.a(state.getBlockType().getId()));
+            newState = mcBlock.getBlockData();
+            Map<Property<?>, Object> states = state.getStates();
+            newState = applyProperties(mcBlock.getStates(), newState, states);
+        }
+        IBlockData successState = chunk.setType(blockPos, newState, false);
         boolean successful = successState != null;
 
         // Create the TileEntity
@@ -281,21 +308,22 @@ public final class Spigot_v1_14_R3 implements BukkitImplAdapter {
                 if (nativeTag != null) {
                     // We will assume that the tile entity was created for us,
                     // though we do not do this on the Forge version
-                    TileEntity tileEntity = craftWorld.getHandle().getTileEntity(pos);
+                    TileEntity tileEntity = craftWorld.getHandle().getTileEntity(blockPos);
                     if (tileEntity != null) {
                         NBTTagCompound tag = (NBTTagCompound) fromNative(nativeTag);
                         tag.set("x", new NBTTagInt(x));
                         tag.set("y", new NBTTagInt(y));
                         tag.set("z", new NBTTagInt(z));
                         readTagIntoTileEntity(tag, tileEntity); // Load data
+                        successful = true;
                     }
                 }
             }
         }
 
         if (successful && notifyAndLight) {
-            craftWorld.getHandle().getChunkProvider().getLightEngine().a(pos); // server should do lighting for us
-            craftWorld.getHandle().notifyAndUpdatePhysics(pos, chunk, old, newState, newState, 1 | 2);
+            craftWorld.getHandle().getChunkProvider().getLightEngine().a(blockPos); // server should do lighting for us
+            craftWorld.getHandle().notifyAndUpdatePhysics(blockPos, chunk, old, newState, newState, 1 | 2);
         }
 
         return successful;
