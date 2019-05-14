@@ -706,7 +706,7 @@ class DataConverters_1_14_R2 extends DataFixerBuilder implements com.sk89q.world
 
     private static class DataInspectorEntity implements DataInspector {
 
-        private static final Logger a = LogManager.getLogger();
+        private static final Logger a = LogManager.getLogger(DataConverters_1_14_R2.class);
 
         DataInspectorEntity() {}
 
@@ -2269,7 +2269,7 @@ class DataConverters_1_14_R2 extends DataFixerBuilder implements com.sk89q.world
 
     private static class DataConverterBedBlock implements DataConverter {
 
-        private static final Logger a = LogManager.getLogger();
+        private static final Logger a = LogManager.getLogger(DataConverters_1_14_R2.class);
 
         DataConverterBedBlock() {}
 
