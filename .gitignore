@@ -11,6 +11,6 @@
 /build
 /target
 /.gradle
-/out
+**/out
 
 /dependency-reduced-pom.xml
