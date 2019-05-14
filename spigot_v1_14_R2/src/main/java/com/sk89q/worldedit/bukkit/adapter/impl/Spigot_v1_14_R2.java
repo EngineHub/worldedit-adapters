@@ -54,49 +54,49 @@ import com.sk89q.worldedit.world.block.BaseBlock;
 import com.sk89q.worldedit.world.block.BlockState;
 import com.sk89q.worldedit.world.block.BlockStateHolder;
 import com.sk89q.worldedit.world.block.BlockType;
-import net.minecraft.server.v1_13_R2.Block;
-import net.minecraft.server.v1_13_R2.BlockPosition;
-import net.minecraft.server.v1_13_R2.BlockStateBoolean;
-import net.minecraft.server.v1_13_R2.BlockStateDirection;
-import net.minecraft.server.v1_13_R2.BlockStateEnum;
-import net.minecraft.server.v1_13_R2.BlockStateInteger;
-import net.minecraft.server.v1_13_R2.BlockStateList;
-import net.minecraft.server.v1_13_R2.Chunk;
-import net.minecraft.server.v1_13_R2.Entity;
-import net.minecraft.server.v1_13_R2.EntityTypes;
-import net.minecraft.server.v1_13_R2.EnumDirection;
-import net.minecraft.server.v1_13_R2.IBlockData;
-import net.minecraft.server.v1_13_R2.IBlockState;
-import net.minecraft.server.v1_13_R2.INamable;
-import net.minecraft.server.v1_13_R2.IRegistry;
-import net.minecraft.server.v1_13_R2.MinecraftKey;
-import net.minecraft.server.v1_13_R2.NBTBase;
-import net.minecraft.server.v1_13_R2.NBTTagByte;
-import net.minecraft.server.v1_13_R2.NBTTagByteArray;
-import net.minecraft.server.v1_13_R2.NBTTagCompound;
-import net.minecraft.server.v1_13_R2.NBTTagDouble;
-import net.minecraft.server.v1_13_R2.NBTTagEnd;
-import net.minecraft.server.v1_13_R2.NBTTagFloat;
-import net.minecraft.server.v1_13_R2.NBTTagInt;
-import net.minecraft.server.v1_13_R2.NBTTagIntArray;
-import net.minecraft.server.v1_13_R2.NBTTagList;
-import net.minecraft.server.v1_13_R2.NBTTagLong;
-import net.minecraft.server.v1_13_R2.NBTTagLongArray;
-import net.minecraft.server.v1_13_R2.NBTTagShort;
-import net.minecraft.server.v1_13_R2.NBTTagString;
-import net.minecraft.server.v1_13_R2.PacketPlayOutEntityStatus;
-import net.minecraft.server.v1_13_R2.PacketPlayOutTileEntityData;
-import net.minecraft.server.v1_13_R2.TileEntity;
-import net.minecraft.server.v1_13_R2.World;
-import net.minecraft.server.v1_13_R2.WorldServer;
+import net.minecraft.server.v1_14_R1.Block;
+import net.minecraft.server.v1_14_R1.BlockPosition;
+import net.minecraft.server.v1_14_R1.BlockStateBoolean;
+import net.minecraft.server.v1_14_R1.BlockStateDirection;
+import net.minecraft.server.v1_14_R1.BlockStateEnum;
+import net.minecraft.server.v1_14_R1.BlockStateInteger;
+import net.minecraft.server.v1_14_R1.BlockStateList;
+import net.minecraft.server.v1_14_R1.Chunk;
+import net.minecraft.server.v1_14_R1.Entity;
+import net.minecraft.server.v1_14_R1.EntityTypes;
+import net.minecraft.server.v1_14_R1.EnumDirection;
+import net.minecraft.server.v1_14_R1.IBlockData;
+import net.minecraft.server.v1_14_R1.IBlockState;
+import net.minecraft.server.v1_14_R1.INamable;
+import net.minecraft.server.v1_14_R1.IRegistry;
+import net.minecraft.server.v1_14_R1.MinecraftKey;
+import net.minecraft.server.v1_14_R1.NBTBase;
+import net.minecraft.server.v1_14_R1.NBTTagByte;
+import net.minecraft.server.v1_14_R1.NBTTagByteArray;
+import net.minecraft.server.v1_14_R1.NBTTagCompound;
+import net.minecraft.server.v1_14_R1.NBTTagDouble;
+import net.minecraft.server.v1_14_R1.NBTTagEnd;
+import net.minecraft.server.v1_14_R1.NBTTagFloat;
+import net.minecraft.server.v1_14_R1.NBTTagInt;
+import net.minecraft.server.v1_14_R1.NBTTagIntArray;
+import net.minecraft.server.v1_14_R1.NBTTagList;
+import net.minecraft.server.v1_14_R1.NBTTagLong;
+import net.minecraft.server.v1_14_R1.NBTTagLongArray;
+import net.minecraft.server.v1_14_R1.NBTTagShort;
+import net.minecraft.server.v1_14_R1.NBTTagString;
+import net.minecraft.server.v1_14_R1.PacketPlayOutEntityStatus;
+import net.minecraft.server.v1_14_R1.PacketPlayOutTileEntityData;
+import net.minecraft.server.v1_14_R1.TileEntity;
+import net.minecraft.server.v1_14_R1.World;
+import net.minecraft.server.v1_14_R1.WorldServer;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.craftbukkit.v1_13_R2.CraftServer;
-import org.bukkit.craftbukkit.v1_13_R2.CraftWorld;
-import org.bukkit.craftbukkit.v1_13_R2.block.data.CraftBlockData;
-import org.bukkit.craftbukkit.v1_13_R2.entity.CraftEntity;
-import org.bukkit.craftbukkit.v1_13_R2.entity.CraftPlayer;
-import org.bukkit.craftbukkit.v1_13_R2.util.CraftMagicNumbers;
+import org.bukkit.craftbukkit.v1_14_R1.CraftServer;
+import org.bukkit.craftbukkit.v1_14_R1.CraftWorld;
+import org.bukkit.craftbukkit.v1_14_R1.block.data.CraftBlockData;
+import org.bukkit.craftbukkit.v1_14_R1.entity.CraftEntity;
+import org.bukkit.craftbukkit.v1_14_R1.entity.CraftPlayer;
+import org.bukkit.craftbukkit.v1_14_R1.util.CraftMagicNumbers;
 import org.bukkit.entity.Player;
 import org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason;
 
@@ -107,13 +107,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ForkJoinPool;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
-public final class Spigot_v1_13_R2 implements BukkitImplAdapter {
+public final class Spigot_v1_14_R2 implements BukkitImplAdapter {
 
     private final Logger logger = Logger.getLogger(getClass().getCanonicalName());
 
@@ -124,9 +125,12 @@ public final class Spigot_v1_13_R2 implements BukkitImplAdapter {
     // Code that may break between versions of Minecraft
     // ------------------------------------------------------------------------
 
-    public Spigot_v1_13_R2() throws NoSuchFieldException, NoSuchMethodException {
+    public Spigot_v1_14_R2() throws NoSuchFieldException, NoSuchMethodException {
         // A simple test
         CraftServer.class.cast(Bukkit.getServer());
+
+
+        if (getDataVersion() < 1957) throw new UnsupportedClassVersionError("Not 1.14.1!");
 
         // The list of tags on an NBTTagList
         nbtListTagListField = NBTTagList.class.getDeclaredField("list");
@@ -136,8 +140,7 @@ public final class Spigot_v1_13_R2 implements BukkitImplAdapter {
         nbtCreateTagMethod = NBTBase.class.getDeclaredMethod("createTag", byte.class);
         nbtCreateTagMethod.setAccessible(true);
 
-        // Spigot broke names mid-version, this is a test to see if it's before or after.
-        new NBTTagString("test").b_();
+        new DataConverters_1_14_R2(getDataVersion(), this).build(ForkJoinPool.commonPool());
     }
 
     @Override
@@ -147,7 +150,7 @@ public final class Spigot_v1_13_R2 implements BukkitImplAdapter {
 
     @Override
     public DataFixer getDataFixer() {
-        return null;
+        return DataConverters_1_14_R2.INSTANCE;
     }
 
     /**
@@ -178,7 +181,7 @@ public final class Spigot_v1_13_R2 implements BukkitImplAdapter {
      */
     @Nullable
     private static String getEntityId(Entity entity) {
-        MinecraftKey minecraftkey = EntityTypes.getName(entity.getBukkitEntity().getHandle().P());
+        MinecraftKey minecraftkey = EntityTypes.getName(entity.getEntityType());
 
         return minecraftkey == null ? null : minecraftkey.toString();
     }
@@ -192,7 +195,7 @@ public final class Spigot_v1_13_R2 implements BukkitImplAdapter {
      */
     @Nullable
     private static Entity createEntityFromId(String id, World world) {
-        return EntityTypes.a(world, new MinecraftKey(id));
+        return EntityTypes.a(id).map(t -> t.a(world)).orElse(null);
     }
 
     /**
@@ -251,12 +254,12 @@ public final class Spigot_v1_13_R2 implements BukkitImplAdapter {
         // First set the block
         Chunk chunk = craftWorld.getHandle().getChunkAt(x >> 4, z >> 4);
         BlockPosition pos = new BlockPosition(x, y, z);
-        IBlockData old = chunk.getBlockData(x, y, z);
+        IBlockData old = chunk.getType(pos);
         Block mcBlock = IRegistry.BLOCK.get(MinecraftKey.a(state.getBlockType().getId()));
         IBlockData newState = mcBlock.getBlockData();
         Map<Property<?>, Object> states = state.getStates();
         newState = applyProperties(mcBlock.getStates(), newState, states);
-        IBlockData successState = chunk.a(pos, newState, false);
+        IBlockData successState = chunk.setType(pos, newState, false);
         boolean successful = successState != null;
 
         // Create the TileEntity
@@ -279,7 +282,7 @@ public final class Spigot_v1_13_R2 implements BukkitImplAdapter {
         }
 
         if (successful && notifyAndLight) {
-            craftWorld.getHandle().r(pos);
+            craftWorld.getHandle().r(pos); // server should do lighting for us
             craftWorld.getHandle().notifyAndUpdatePhysics(pos, chunk, old, newState, newState, 1 | 2);
         }
 
@@ -411,7 +414,7 @@ public final class Spigot_v1_13_R2 implements BukkitImplAdapter {
     }
 
     @Override
-    public void sendFakeNBT(org.bukkit.entity.Player player, BlockVector3 pos, CompoundTag nbtData) {
+    public void sendFakeNBT(Player player, BlockVector3 pos, CompoundTag nbtData) {
         ((CraftPlayer) player).getHandle().playerConnection.sendPacket(new PacketPlayOutTileEntityData(
                 new BlockPosition(pos.getBlockX(), pos.getBlockY(), pos.getBlockZ()),
                 7,
@@ -438,7 +441,7 @@ public final class Spigot_v1_13_R2 implements BukkitImplAdapter {
      * @return native WorldEdit NBT structure
      */
     @SuppressWarnings("unchecked")
-    private Tag toNative(NBTBase foreign) {
+    Tag toNative(NBTBase foreign) {
         if (foreign == null) {
             return null;
         }
@@ -452,19 +455,19 @@ public final class Spigot_v1_13_R2 implements BukkitImplAdapter {
             }
             return new CompoundTag(values);
         } else if (foreign instanceof NBTTagByte) {
-            return new ByteTag(((NBTTagByte) foreign).g()); // getByte
+            return new ByteTag(((NBTTagByte) foreign).asByte());
         } else if (foreign instanceof NBTTagByteArray) {
-            return new ByteArrayTag(((NBTTagByteArray) foreign).c()); // data
+            return new ByteArrayTag(((NBTTagByteArray) foreign).getBytes()); // data
         } else if (foreign instanceof NBTTagDouble) {
             return new DoubleTag(((NBTTagDouble) foreign).asDouble()); // getDouble
         } else if (foreign instanceof NBTTagFloat) {
-            return new FloatTag(((NBTTagFloat) foreign).i()); // getFloat
+            return new FloatTag(((NBTTagFloat) foreign).asFloat());
         } else if (foreign instanceof NBTTagInt) {
-            return new IntTag(((NBTTagInt) foreign).e()); // getInt
+            return new IntTag(((NBTTagInt) foreign).asInt());
         } else if (foreign instanceof NBTTagIntArray) {
-            return new IntArrayTag(((NBTTagIntArray) foreign).d()); // data
+            return new IntArrayTag(((NBTTagIntArray) foreign).getInts()); // data
         } else if (foreign instanceof NBTTagLongArray) {
-            return new LongArrayTag(((NBTTagLongArray) foreign).d()); // data
+            return new LongArrayTag(((NBTTagLongArray) foreign).getLongs()); // data
         } else if (foreign instanceof NBTTagList) {
             try {
                 return toNativeList((NBTTagList) foreign);
@@ -473,11 +476,11 @@ public final class Spigot_v1_13_R2 implements BukkitImplAdapter {
                 return new ListTag(ByteTag.class, new ArrayList<ByteTag>());
             }
         } else if (foreign instanceof NBTTagLong) {
-            return new LongTag(((NBTTagLong) foreign).d()); // getLong
+            return new LongTag(((NBTTagLong) foreign).asLong());
         } else if (foreign instanceof NBTTagShort) {
-            return new ShortTag(((NBTTagShort) foreign).f()); // getShort
+            return new ShortTag(((NBTTagShort) foreign).asShort());
         } else if (foreign instanceof NBTTagString) {
-            return new StringTag(foreign.b_()); // data
+            return new StringTag(foreign.asString());
         } else if (foreign instanceof NBTTagEnd) {
             return new EndTag();
         } else {
@@ -497,7 +500,7 @@ public final class Spigot_v1_13_R2 implements BukkitImplAdapter {
      */
     private ListTag toNativeList(NBTTagList foreign) throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
         List<Tag> values = new ArrayList<>();
-        int type = foreign.d();
+        int type = foreign.a_();
 
         List foreignList;
         foreignList = (List) nbtListTagListField.get(foreign);
@@ -516,7 +519,7 @@ public final class Spigot_v1_13_R2 implements BukkitImplAdapter {
      * @param foreign structure to convert
      * @return non-native structure
      */
-    private NBTBase fromNative(Tag foreign) {
+    NBTBase fromNative(Tag foreign) {
         if (foreign == null) {
             return null;
         }

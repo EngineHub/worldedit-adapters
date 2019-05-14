@@ -49,6 +49,7 @@ import com.sk89q.worldedit.registry.state.EnumProperty;
 import com.sk89q.worldedit.registry.state.IntegerProperty;
 import com.sk89q.worldedit.registry.state.Property;
 import com.sk89q.worldedit.util.Direction;
+import com.sk89q.worldedit.world.DataFixer;
 import com.sk89q.worldedit.world.block.BaseBlock;
 import com.sk89q.worldedit.world.block.BlockState;
 import com.sk89q.worldedit.world.block.BlockStateHolder;
@@ -127,6 +128,8 @@ public final class Spigot_v1_14_R1 implements BukkitImplAdapter {
         // A simple test
         CraftServer.class.cast(Bukkit.getServer());
 
+        if (getDataVersion() >= 1957) throw new UnsupportedClassVersionError("Not 1.14!");
+
         // The list of tags on an NBTTagList
         nbtListTagListField = NBTTagList.class.getDeclaredField("list");
         nbtListTagListField.setAccessible(true);
@@ -139,6 +142,11 @@ public final class Spigot_v1_14_R1 implements BukkitImplAdapter {
     @Override
     public int getDataVersion() {
         return CraftMagicNumbers.INSTANCE.getDataVersion();
+    }
+
+    @Override
+    public DataFixer getDataFixer() {
+        return null;
     }
 
     /**

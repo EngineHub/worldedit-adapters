@@ -49,6 +49,7 @@ import com.sk89q.worldedit.registry.state.EnumProperty;
 import com.sk89q.worldedit.registry.state.IntegerProperty;
 import com.sk89q.worldedit.registry.state.Property;
 import com.sk89q.worldedit.util.Direction;
+import com.sk89q.worldedit.world.DataFixer;
 import com.sk89q.worldedit.world.block.BaseBlock;
 import com.sk89q.worldedit.world.block.BlockState;
 import com.sk89q.worldedit.world.block.BlockStateHolder;
@@ -106,6 +107,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ForkJoinPool;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -137,11 +139,18 @@ public final class Spigot_v1_13_R2_2 implements BukkitImplAdapter {
 
         // Spigot broke names mid-version, this is a test to see if it's before or after.
         new NBTTagString("test").asString();
+
+        new DataConverters_1_13_R2_2(getDataVersion(), this).build(ForkJoinPool.commonPool());
     }
 
     @Override
     public int getDataVersion() {
         return CraftMagicNumbers.INSTANCE.getDataVersion();
+    }
+
+    @Override
+    public DataFixer getDataFixer() {
+        return DataConverters_1_13_R2_2.INSTANCE;
     }
 
     /**
@@ -432,7 +441,7 @@ public final class Spigot_v1_13_R2_2 implements BukkitImplAdapter {
      * @return native WorldEdit NBT structure
      */
     @SuppressWarnings("unchecked")
-    private Tag toNative(NBTBase foreign) {
+    Tag toNative(NBTBase foreign) {
         if (foreign == null) {
             return null;
         }
@@ -510,7 +519,7 @@ public final class Spigot_v1_13_R2_2 implements BukkitImplAdapter {
      * @param foreign structure to convert
      * @return non-native structure
      */
-    private NBTBase fromNative(Tag foreign) {
+    NBTBase fromNative(Tag foreign) {
         if (foreign == null) {
             return null;
         }
