@@ -15,6 +15,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Executor;
+import java.util.stream.Collectors;
 
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
@@ -40,6 +41,7 @@ import net.minecraft.server.v1_13_R2.EnumColor;
 import net.minecraft.server.v1_13_R2.EnumDirection;
 import net.minecraft.server.v1_13_R2.IChatBaseComponent;
 import net.minecraft.server.v1_13_R2.MinecraftKey;
+import net.minecraft.server.v1_13_R2.NBTBase;
 import net.minecraft.server.v1_13_R2.NBTTagCompound;
 import net.minecraft.server.v1_13_R2.NBTTagFloat;
 import net.minecraft.server.v1_13_R2.NBTTagList;
@@ -66,21 +68,89 @@ import javax.annotation.Nullable;
 class DataConverters_1_13_R2_2 extends DataFixerBuilder implements com.sk89q.worldedit.world.DataFixer {
 
     @Override
-    public CompoundTag fixChunk(CompoundTag originalChunk) {
+    public CompoundTag fixChunk(CompoundTag originalChunk, int srcVer) {
         NBTTagCompound tag = (NBTTagCompound) adapter.fromNative(originalChunk);
-        NBTTagCompound fixed = convert(LegacyType.CHUNK, tag);
+        NBTTagCompound fixed = convert(LegacyType.CHUNK, tag, srcVer);
         return (CompoundTag) adapter.toNative(fixed);
+    }
+
+    @Override
+    public CompoundTag fixBlockEntity(CompoundTag origTileEnt, int srcVer) {
+        NBTTagCompound tag = (NBTTagCompound) adapter.fromNative(origTileEnt);
+        NBTTagCompound fixed = convert(LegacyType.BLOCK_ENTITY, tag, srcVer);
+        return (CompoundTag) adapter.toNative(fixed);
+    }
+
+    @Override
+    public CompoundTag fixEntity(CompoundTag origEnt, int srcVer) {
+        NBTTagCompound tag = (NBTTagCompound) adapter.fromNative(origEnt);
+        NBTTagCompound fixed = convert(LegacyType.ENTITY, tag, srcVer);
+        return (CompoundTag) adapter.toNative(fixed);
+    }
+
+    @Override
+    public String fixBlockState(String blockState, int srcVer) {
+        NBTTagCompound stateNBT = stateToNBT(blockState);
+        Dynamic<NBTBase> dynamic = new Dynamic<>(OPS_NBT, stateNBT);
+        NBTTagCompound fixed = (NBTTagCompound) INSTANCE.fixer.update(DataConverterTypes.l, dynamic, srcVer, DATA_VERSION).getValue();
+        return nbtToState(fixed);
+    }
+
+    private String nbtToState(NBTTagCompound tagCompound) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(tagCompound.getString("Name"));
+        if (tagCompound.hasKeyOfType("Properties", 10)) {
+            sb.append('[');
+            NBTTagCompound props = tagCompound.getCompound("Properties");
+            sb.append(props.getKeys().stream().map(k -> k + "=" + props.getString(k).replace("\"", "")).collect(Collectors.joining(",")));
+            sb.append(']');
+        }
+        return sb.toString();
+    }
+
+    private static NBTTagCompound stateToNBT(String blockState) {
+        int propIdx = blockState.indexOf('[');
+        NBTTagCompound tag = new NBTTagCompound();
+        if (propIdx < 0) {
+            tag.setString("Name", blockState);
+        } else {
+            tag.setString("Name", blockState.substring(0, propIdx));
+            NBTTagCompound propTag = new NBTTagCompound();
+            String props = blockState.substring(propIdx + 1, blockState.length() - 1);
+            String[] propArr = props.split(",");
+            for (String pair : propArr) {
+                final String[] split = pair.split("=");
+                propTag.setString(split[0], split[1]);
+            }
+            tag.set("Properties", propTag);
+        }
+        return tag;
+    }
+
+    @Override
+    public String fixBiome(String key, int srcVer) {
+        return fixName(key, srcVer, DataConverterTypes.w); // "biome"
+    }
+
+    @Override
+    public String fixItemType(String key, int srcVer) {
+        return fixName(key, srcVer, DataConverterTypes.q); // "item_name"
+    }
+
+    private static String fixName(String key, int srcVer, TypeReference type) {
+        return INSTANCE.fixer.update(type, new Dynamic<>(OPS_NBT, new NBTTagString(key)), srcVer, DATA_VERSION)
+                .getStringValue().orElse(key);
     }
 
     private final Spigot_v1_13_R2_2 adapter;
 
     private static final DynamicOpsNBT OPS_NBT = DynamicOpsNBT.a;
     private static final int LEGACY_VERSION = 1343;
-    public static int DATA_VERSION;
-    public static DataConverters_1_13_R2_2 INSTANCE;
+    private static int DATA_VERSION;
+    static DataConverters_1_13_R2_2 INSTANCE;
 
     private final Map<LegacyType, List<DataConverter>> converters = new EnumMap<>(LegacyType.class);
-    private final Map<LegacyType, List<DataInspector>> inspectors = new EnumMap(LegacyType.class);
+    private final Map<LegacyType, List<DataInspector>> inspectors = new EnumMap<>(LegacyType.class);
 
     // Set on build
     private DataFixer fixer;
