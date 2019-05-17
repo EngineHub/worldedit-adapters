@@ -2,21 +2,6 @@ package com.sk89q.worldedit.bukkit.adapter.impl;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-
-import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.EnumMap;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.Executor;
-import java.util.stream.Collectors;
-
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -51,6 +36,19 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nullable;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.Executor;
+import java.util.stream.Collectors;
 
 /**
  * Handles converting all Pre 1.13.2 data using the Legacy DataFix System (ported to 1.13.2)
@@ -67,29 +65,44 @@ import javax.annotation.Nullable;
 @SuppressWarnings("UnnecessarilyQualifiedStaticUsage")
 class DataConverters_1_13_R2_2 extends DataFixerBuilder implements com.sk89q.worldedit.world.DataFixer {
 
+    @SuppressWarnings("unchecked")
     @Override
-    public CompoundTag fixChunk(CompoundTag originalChunk, int srcVer) {
+    public <T> T fixUp(FixType<T> type, T original, int srcVer) {
+        if (type == FixTypes.CHUNK) {
+            return (T) fixChunk((CompoundTag) original, srcVer);
+        } else if (type == FixTypes.BLOCK_ENTITY) {
+            return (T) fixBlockEntity((CompoundTag) original, srcVer);
+        } else if (type == FixTypes.ENTITY) {
+            return (T) fixEntity((CompoundTag) original, srcVer);
+        } else if (type == FixTypes.BLOCK_STATE) {
+            return (T) fixBlockState((String) original, srcVer);
+        } else if (type == FixTypes.ITEM_TYPE) {
+            return (T) fixItemType((String) original, srcVer);
+        } else if (type == FixTypes.BIOME) {
+            return (T) fixBiome((String) original, srcVer);
+        }
+        return original;
+    }
+
+    private CompoundTag fixChunk(CompoundTag originalChunk, int srcVer) {
         NBTTagCompound tag = (NBTTagCompound) adapter.fromNative(originalChunk);
         NBTTagCompound fixed = convert(LegacyType.CHUNK, tag, srcVer);
         return (CompoundTag) adapter.toNative(fixed);
     }
 
-    @Override
-    public CompoundTag fixBlockEntity(CompoundTag origTileEnt, int srcVer) {
+    private CompoundTag fixBlockEntity(CompoundTag origTileEnt, int srcVer) {
         NBTTagCompound tag = (NBTTagCompound) adapter.fromNative(origTileEnt);
         NBTTagCompound fixed = convert(LegacyType.BLOCK_ENTITY, tag, srcVer);
         return (CompoundTag) adapter.toNative(fixed);
     }
 
-    @Override
-    public CompoundTag fixEntity(CompoundTag origEnt, int srcVer) {
+    private CompoundTag fixEntity(CompoundTag origEnt, int srcVer) {
         NBTTagCompound tag = (NBTTagCompound) adapter.fromNative(origEnt);
         NBTTagCompound fixed = convert(LegacyType.ENTITY, tag, srcVer);
         return (CompoundTag) adapter.toNative(fixed);
     }
 
-    @Override
-    public String fixBlockState(String blockState, int srcVer) {
+    private String fixBlockState(String blockState, int srcVer) {
         NBTTagCompound stateNBT = stateToNBT(blockState);
         Dynamic<NBTBase> dynamic = new Dynamic<>(OPS_NBT, stateNBT);
         NBTTagCompound fixed = (NBTTagCompound) INSTANCE.fixer.update(DataConverterTypes.l, dynamic, srcVer, DATA_VERSION).getValue();
@@ -127,13 +140,11 @@ class DataConverters_1_13_R2_2 extends DataFixerBuilder implements com.sk89q.wor
         return tag;
     }
 
-    @Override
-    public String fixBiome(String key, int srcVer) {
+    private String fixBiome(String key, int srcVer) {
         return fixName(key, srcVer, DataConverterTypes.w); // "biome"
     }
 
-    @Override
-    public String fixItemType(String key, int srcVer) {
+    private String fixItemType(String key, int srcVer) {
         return fixName(key, srcVer, DataConverterTypes.q); // "item_name"
     }
 
@@ -160,7 +171,7 @@ class DataConverters_1_13_R2_2 extends DataFixerBuilder implements com.sk89q.wor
         LEVEL(DataFixTypes.LEVEL),
         PLAYER(DataFixTypes.PLAYER),
         CHUNK(DataFixTypes.CHUNK),
-        BLOCK_ENTITY(() -> "block_entity"),
+        BLOCK_ENTITY(DataConverterTypes.j), // "block_entity"
         ENTITY(DataConverterTypes.ENTITY),
         ITEM_INSTANCE(DataConverterTypes.ITEM_STACK),
         OPTIONS(DataFixTypes.OPTIONS),
