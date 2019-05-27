@@ -71,6 +71,12 @@ project(':spigot_v1_14_R2') {
     }
 }
 
+project(':spigot_v1_14_R3') {
+    dependencies {
+        compile "org.bukkit:craftbukkit:1.14.2-R0.1-SNAPSHOT"
+    }
+}
+
 subprojects.each { subproject -> evaluationDependsOn( subproject.path ) }
 jar.dependsOn subprojects.tasks['classes']
 jar {

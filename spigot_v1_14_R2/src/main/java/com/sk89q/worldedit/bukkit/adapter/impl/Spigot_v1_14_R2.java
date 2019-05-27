@@ -282,7 +282,7 @@ public final class Spigot_v1_14_R2 implements BukkitImplAdapter {
         }
 
         if (successful && notifyAndLight) {
-            craftWorld.getHandle().r(pos); // server should do lighting for us
+            craftWorld.getHandle().getChunkProvider().getLightEngine().a(pos); // server should do lighting for us
             craftWorld.getHandle().notifyAndUpdatePhysics(pos, chunk, old, newState, newState, 1 | 2);
         }
 
@@ -328,7 +328,7 @@ public final class Spigot_v1_14_R2 implements BukkitImplAdapter {
 
         BlockPosition blockPosition = new BlockPosition(position.getBlockX(), position.getBlockY(), position.getBlockZ());
         IBlockData oldData = ((CraftBlockData) BukkitAdapter.adapt(previousType)).getState();
-        IBlockData newData = craftWorld.getHandle().i(blockPosition);
+        IBlockData newData = craftWorld.getHandle().getType(blockPosition);
 
         //        craftWorld.getHandle().r(blockPosition); // Re-light
         craftWorld.getHandle().notifyAndUpdatePhysics(blockPosition, null, oldData, newData, newData, 1 | 2); // Update

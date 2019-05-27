@@ -328,7 +328,7 @@ public final class Spigot_v1_13_R2_2 implements BukkitImplAdapter {
 
         BlockPosition blockPosition = new BlockPosition(position.getBlockX(), position.getBlockY(), position.getBlockZ());
         IBlockData oldData = ((CraftBlockData) BukkitAdapter.adapt(previousType)).getState();
-        IBlockData newData = craftWorld.getHandle().i(blockPosition);
+        IBlockData newData = craftWorld.getHandle().getType(blockPosition);
 
         //        craftWorld.getHandle().r(blockPosition); // Re-light
         craftWorld.getHandle().notifyAndUpdatePhysics(blockPosition, null, oldData, newData, newData, 1 | 2); // Update

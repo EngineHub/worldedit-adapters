@@ -265,7 +265,7 @@ public final class Spigot_v1_14_R1 implements BukkitImplAdapter {
         }
 
         if (successful && notifyAndLight) {
-            craftWorld.getHandle().r(pos); // server should do lighting for us
+            craftWorld.getHandle().getChunkProvider().getLightEngine().a(pos); // server should do lighting for us
             craftWorld.getHandle().notifyAndUpdatePhysics(pos, chunk, old, newState, newState, 1 | 2);
         }
 
