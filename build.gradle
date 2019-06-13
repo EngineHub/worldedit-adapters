@@ -30,11 +30,11 @@ subprojects {
     repositories {
         mavenLocal()
         mavenCentral()
-        maven { url "http://maven.sk89q.com/repo/" }
+        maven { url "https://maven.sk89q.com/repo/" }
     }
 
     dependencies {
-        compile "com.sk89q.worldedit:worldedit-bukkit:7.0.0-SNAPSHOT"
+        compile "com.sk89q.worldedit:worldedit-bukkit:7.0.1-SNAPSHOT"
         testCompile "junit:junit:4.11"
     }
 

@@ -19,8 +19,6 @@
 
 package com.sk89q.worldedit.bukkit.adapter.impl;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.sk89q.jnbt.ByteArrayTag;
@@ -38,6 +36,7 @@ import com.sk89q.jnbt.NBTConstants;
 import com.sk89q.jnbt.ShortTag;
 import com.sk89q.jnbt.StringTag;
 import com.sk89q.jnbt.Tag;
+import com.sk89q.worldedit.blocks.BaseItemStack;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.bukkit.adapter.BukkitImplAdapter;
 import com.sk89q.worldedit.entity.BaseEntity;
@@ -69,6 +68,7 @@ import net.minecraft.server.v1_13_R2.IBlockData;
 import net.minecraft.server.v1_13_R2.IBlockState;
 import net.minecraft.server.v1_13_R2.INamable;
 import net.minecraft.server.v1_13_R2.IRegistry;
+import net.minecraft.server.v1_13_R2.ItemStack;
 import net.minecraft.server.v1_13_R2.MinecraftKey;
 import net.minecraft.server.v1_13_R2.NBTBase;
 import net.minecraft.server.v1_13_R2.NBTTagByte;
@@ -96,10 +96,12 @@ import org.bukkit.craftbukkit.v1_13_R2.CraftWorld;
 import org.bukkit.craftbukkit.v1_13_R2.block.data.CraftBlockData;
 import org.bukkit.craftbukkit.v1_13_R2.entity.CraftEntity;
 import org.bukkit.craftbukkit.v1_13_R2.entity.CraftPlayer;
+import org.bukkit.craftbukkit.v1_13_R2.inventory.CraftItemStack;
 import org.bukkit.craftbukkit.v1_13_R2.util.CraftMagicNumbers;
 import org.bukkit.entity.Player;
 import org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason;
 
+import javax.annotation.Nullable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -111,7 +113,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-import javax.annotation.Nullable;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class Spigot_v1_13_R2 implements BukkitImplAdapter {
 
@@ -424,6 +426,21 @@ public final class Spigot_v1_13_R2 implements BukkitImplAdapter {
         ((CraftPlayer) player).getHandle().playerConnection.sendPacket(new PacketPlayOutEntityStatus(
                 ((CraftPlayer) player).getHandle(), (byte) 28
         ));
+    }
+
+    @Override
+    public org.bukkit.inventory.ItemStack adapt(BaseItemStack item) {
+        ItemStack stack = new ItemStack(IRegistry.ITEM.get(MinecraftKey.a(item.getType().getId())), item.getAmount());
+        stack.setTag(((NBTTagCompound) fromNative(item.getNbtData())));
+        return CraftItemStack.asCraftMirror(stack);
+    }
+
+    @Override
+    public BaseItemStack adapt(org.bukkit.inventory.ItemStack itemStack) {
+        final ItemStack nmsStack = CraftItemStack.asNMSCopy(itemStack);
+        final BaseItemStack weStack = new BaseItemStack(BukkitAdapter.asItemType(itemStack.getType()), itemStack.getAmount());
+        weStack.setNbtData(((CompoundTag) toNative(nmsStack.getTag())));
+        return weStack;
     }
 
     // ------------------------------------------------------------------------

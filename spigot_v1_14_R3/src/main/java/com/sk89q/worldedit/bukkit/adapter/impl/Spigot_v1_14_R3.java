@@ -19,8 +19,9 @@
 
 package com.sk89q.worldedit.bukkit.adapter.impl;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.sk89q.jnbt.ByteArrayTag;
@@ -38,6 +39,8 @@ import com.sk89q.jnbt.NBTConstants;
 import com.sk89q.jnbt.ShortTag;
 import com.sk89q.jnbt.StringTag;
 import com.sk89q.jnbt.Tag;
+import com.sk89q.worldedit.blocks.BaseItem;
+import com.sk89q.worldedit.blocks.BaseItemStack;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.bukkit.adapter.BukkitImplAdapter;
 import com.sk89q.worldedit.entity.BaseEntity;
@@ -65,11 +68,16 @@ import net.minecraft.server.v1_14_R1.Chunk;
 import net.minecraft.server.v1_14_R1.Entity;
 import net.minecraft.server.v1_14_R1.EntityTypes;
 import net.minecraft.server.v1_14_R1.EnumDirection;
+import net.minecraft.server.v1_14_R1.EnumHand;
+import net.minecraft.server.v1_14_R1.EnumInteractionResult;
 import net.minecraft.server.v1_14_R1.IBlockData;
 import net.minecraft.server.v1_14_R1.IBlockState;
 import net.minecraft.server.v1_14_R1.INamable;
 import net.minecraft.server.v1_14_R1.IRegistry;
+import net.minecraft.server.v1_14_R1.ItemActionContext;
+import net.minecraft.server.v1_14_R1.ItemStack;
 import net.minecraft.server.v1_14_R1.MinecraftKey;
+import net.minecraft.server.v1_14_R1.MovingObjectPositionBlock;
 import net.minecraft.server.v1_14_R1.NBTBase;
 import net.minecraft.server.v1_14_R1.NBTTagByte;
 import net.minecraft.server.v1_14_R1.NBTTagByteArray;
@@ -87,6 +95,7 @@ import net.minecraft.server.v1_14_R1.NBTTagString;
 import net.minecraft.server.v1_14_R1.PacketPlayOutEntityStatus;
 import net.minecraft.server.v1_14_R1.PacketPlayOutTileEntityData;
 import net.minecraft.server.v1_14_R1.TileEntity;
+import net.minecraft.server.v1_14_R1.Vec3D;
 import net.minecraft.server.v1_14_R1.World;
 import net.minecraft.server.v1_14_R1.WorldServer;
 import org.bukkit.Bukkit;
@@ -96,10 +105,12 @@ import org.bukkit.craftbukkit.v1_14_R1.CraftWorld;
 import org.bukkit.craftbukkit.v1_14_R1.block.data.CraftBlockData;
 import org.bukkit.craftbukkit.v1_14_R1.entity.CraftEntity;
 import org.bukkit.craftbukkit.v1_14_R1.entity.CraftPlayer;
+import org.bukkit.craftbukkit.v1_14_R1.inventory.CraftItemStack;
 import org.bukkit.craftbukkit.v1_14_R1.util.CraftMagicNumbers;
 import org.bukkit.entity.Player;
 import org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason;
 
+import javax.annotation.Nullable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -107,12 +118,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-import javax.annotation.Nullable;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class Spigot_v1_14_R3 implements BukkitImplAdapter {
 
@@ -427,6 +439,59 @@ public final class Spigot_v1_14_R3 implements BukkitImplAdapter {
         ((CraftPlayer) player).getHandle().playerConnection.sendPacket(new PacketPlayOutEntityStatus(
                 ((CraftPlayer) player).getHandle(), (byte) 28
         ));
+    }
+
+    @Override
+    public org.bukkit.inventory.ItemStack adapt(BaseItemStack item) {
+        ItemStack stack = new ItemStack(IRegistry.ITEM.get(MinecraftKey.a(item.getType().getId())), item.getAmount());
+        stack.setTag(((NBTTagCompound) fromNative(item.getNbtData())));
+        return CraftItemStack.asCraftMirror(stack);
+    }
+
+    @Override
+    public BaseItemStack adapt(org.bukkit.inventory.ItemStack itemStack) {
+        final ItemStack nmsStack = CraftItemStack.asNMSCopy(itemStack);
+        final BaseItemStack weStack = new BaseItemStack(BukkitAdapter.asItemType(itemStack.getType()), itemStack.getAmount());
+        weStack.setNbtData(((CompoundTag) toNative(nmsStack.getTag())));
+        return weStack;
+    }
+
+    private LoadingCache<WorldServer, FakePlayer_v1_14_R3> fakePlayers
+            = CacheBuilder.newBuilder().weakKeys().softValues().build(CacheLoader.from(FakePlayer_v1_14_R3::new));
+
+    @Override
+    public boolean simulateItemUse(org.bukkit.World world, BlockVector3 position, BaseItem item, Direction face) {
+        CraftWorld craftWorld = (CraftWorld) world;
+        WorldServer worldServer = craftWorld.getHandle();
+        ItemStack stack = CraftItemStack.asNMSCopy(BukkitAdapter.adapt(item instanceof BaseItemStack
+                ? ((BaseItemStack) item) : new BaseItemStack(item.getType(), item.getNbtData(), 1)));
+        stack.setTag((NBTTagCompound) fromNative(item.getNbtData()));
+
+        FakePlayer_v1_14_R3 fakePlayer;
+        try {
+            fakePlayer = fakePlayers.get(worldServer);
+        } catch (ExecutionException ignored) {
+            return false;
+        }
+        fakePlayer.a(EnumHand.MAIN_HAND, stack);
+        fakePlayer.setLocation(position.getBlockX(), position.getBlockY(), position.getBlockZ(),
+                (float) face.toVector().toYaw(), (float) face.toVector().toPitch());
+
+        final BlockPosition blockPos = new BlockPosition(position.getBlockX(), position.getBlockY(), position.getBlockZ());
+        final Vec3D blockVec = new Vec3D(blockPos);
+        final EnumDirection enumFacing = adapt(face);
+        MovingObjectPositionBlock rayTrace = new MovingObjectPositionBlock(blockVec, enumFacing, blockPos, false);
+        ItemActionContext context = new ItemActionContext(fakePlayer, EnumHand.MAIN_HAND, rayTrace);
+        EnumInteractionResult result = stack.placeItem(context, EnumHand.MAIN_HAND);
+        if (result != EnumInteractionResult.SUCCESS) {
+            if (worldServer.i(blockPos).interact(worldServer, fakePlayer, EnumHand.MAIN_HAND, rayTrace)) {
+                result = EnumInteractionResult.SUCCESS;
+            } else {
+                result = stack.getItem().a(worldServer, fakePlayer, EnumHand.MAIN_HAND).a();
+            }
+        }
+
+        return result == EnumInteractionResult.SUCCESS;
     }
 
     // ------------------------------------------------------------------------
