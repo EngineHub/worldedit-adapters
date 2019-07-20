@@ -129,7 +129,7 @@ import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public final class Spigot_v1_14_R3 implements BukkitImplAdapter {
+public final class Spigot_v1_14_R4 implements BukkitImplAdapter {
 
     private final Logger logger = Logger.getLogger(getClass().getCanonicalName());
 
@@ -140,12 +140,12 @@ public final class Spigot_v1_14_R3 implements BukkitImplAdapter {
     // Code that may break between versions of Minecraft
     // ------------------------------------------------------------------------
 
-    public Spigot_v1_14_R3() throws NoSuchFieldException, NoSuchMethodException {
+    public Spigot_v1_14_R4() throws NoSuchFieldException, NoSuchMethodException {
         // A simple test
         CraftServer.class.cast(Bukkit.getServer());
 
 
-        if (getDataVersion() < 1962 || getDataVersion() > 1968) throw new UnsupportedClassVersionError("Not 1.14.2/3!");
+        if (getDataVersion() < 1976) throw new UnsupportedClassVersionError("Not 1.14.4!");
 
         // The list of tags on an NBTTagList
         nbtListTagListField = NBTTagList.class.getDeclaredField("list");
@@ -155,7 +155,7 @@ public final class Spigot_v1_14_R3 implements BukkitImplAdapter {
         nbtCreateTagMethod = NBTBase.class.getDeclaredMethod("createTag", byte.class);
         nbtCreateTagMethod.setAccessible(true);
 
-        new DataConverters_1_14_R3(getDataVersion(), this).build(ForkJoinPool.commonPool());
+        new DataConverters_1_14_R4(getDataVersion(), this).build(ForkJoinPool.commonPool());
     }
 
     @Override
@@ -165,7 +165,7 @@ public final class Spigot_v1_14_R3 implements BukkitImplAdapter {
 
     @Override
     public DataFixer getDataFixer() {
-        return DataConverters_1_14_R3.INSTANCE;
+        return DataConverters_1_14_R4.INSTANCE;
     }
 
     /**
@@ -435,15 +435,15 @@ public final class Spigot_v1_14_R3 implements BukkitImplAdapter {
         for (IBlockState state : blockStateList.d()) {
             Property property;
             if (state instanceof BlockStateBoolean) {
-                property = new BooleanProperty(state.a(), ImmutableList.copyOf(state.d()));
+                property = new BooleanProperty(state.a(), ImmutableList.copyOf(state.getValues()));
             } else if (state instanceof BlockStateDirection) {
                 property = new DirectionalProperty(state.a(),
-                        (List<Direction>) state.d().stream().map(e -> Direction.valueOf(((INamable) e).getName().toUpperCase())).collect(Collectors.toList()));
+                        (List<Direction>) state.getValues().stream().map(e -> Direction.valueOf(((INamable) e).getName().toUpperCase())).collect(Collectors.toList()));
             } else if (state instanceof BlockStateEnum) {
                 property = new EnumProperty(state.a(),
-                        (List<String>) state.d().stream().map(e -> ((INamable) e).getName()).collect(Collectors.toList()));
+                        (List<String>) state.getValues().stream().map(e -> ((INamable) e).getName()).collect(Collectors.toList()));
             } else if (state instanceof BlockStateInteger) {
-                property = new IntegerProperty(state.a(), ImmutableList.copyOf(state.d()));
+                property = new IntegerProperty(state.a(), ImmutableList.copyOf(state.getValues()));
             } else {
                 throw new IllegalArgumentException("WorldEdit needs an update to support " + state.getClass().getSimpleName());
             }
@@ -484,8 +484,8 @@ public final class Spigot_v1_14_R3 implements BukkitImplAdapter {
         return weStack;
     }
 
-    private LoadingCache<WorldServer, FakePlayer_v1_14_R3> fakePlayers
-            = CacheBuilder.newBuilder().weakKeys().softValues().build(CacheLoader.from(FakePlayer_v1_14_R3::new));
+    private LoadingCache<WorldServer, FakePlayer_v1_14_R4> fakePlayers
+            = CacheBuilder.newBuilder().weakKeys().softValues().build(CacheLoader.from(FakePlayer_v1_14_R4::new));
 
     @Override
     public boolean simulateItemUse(org.bukkit.World world, BlockVector3 position, BaseItem item, Direction face) {
@@ -495,7 +495,7 @@ public final class Spigot_v1_14_R3 implements BukkitImplAdapter {
                 ? ((BaseItemStack) item) : new BaseItemStack(item.getType(), item.getNbtData(), 1)));
         stack.setTag((NBTTagCompound) fromNative(item.getNbtData()));
 
-        FakePlayer_v1_14_R3 fakePlayer;
+        FakePlayer_v1_14_R4 fakePlayer;
         try {
             fakePlayer = fakePlayers.get(worldServer);
         } catch (ExecutionException ignored) {

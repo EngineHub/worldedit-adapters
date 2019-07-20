@@ -37,15 +37,15 @@ import javax.annotation.Nullable;
 import java.util.OptionalInt;
 import java.util.UUID;
 
-class FakePlayer_v1_14_R3 extends EntityPlayer {
+class FakePlayer_v1_14_R4 extends EntityPlayer {
     private static final GameProfile FAKE_WORLDEDIT_PROFILE = new GameProfile(UUID.nameUUIDFromBytes("worldedit".getBytes()), "[WorldEdit]");
 
-    FakePlayer_v1_14_R3(WorldServer world) {
+    FakePlayer_v1_14_R4(WorldServer world) {
         super(world.getMinecraftServer(), world, FAKE_WORLDEDIT_PROFILE, new PlayerInteractManager(world));
     }
 
     @Override
-    public Vec3D ch() {
+    public Vec3D bP() {
         return new Vec3D(0, 0, 0);
     }
 
