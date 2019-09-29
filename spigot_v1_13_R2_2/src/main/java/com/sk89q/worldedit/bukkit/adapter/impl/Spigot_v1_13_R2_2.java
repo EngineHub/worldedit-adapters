@@ -40,6 +40,7 @@ import com.sk89q.worldedit.blocks.BaseItemStack;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.bukkit.adapter.BukkitImplAdapter;
 import com.sk89q.worldedit.entity.BaseEntity;
+import com.sk89q.worldedit.extension.platform.Watchdog;
 import com.sk89q.worldedit.internal.Constants;
 import com.sk89q.worldedit.internal.block.BlockStateIdAccess;
 import com.sk89q.worldedit.math.BlockVector3;
@@ -71,6 +72,7 @@ import net.minecraft.server.v1_13_R2.INamable;
 import net.minecraft.server.v1_13_R2.IRegistry;
 import net.minecraft.server.v1_13_R2.ItemStack;
 import net.minecraft.server.v1_13_R2.MinecraftKey;
+import net.minecraft.server.v1_13_R2.MinecraftServer;
 import net.minecraft.server.v1_13_R2.NBTBase;
 import net.minecraft.server.v1_13_R2.NBTTagByte;
 import net.minecraft.server.v1_13_R2.NBTTagByteArray;
@@ -87,6 +89,7 @@ import net.minecraft.server.v1_13_R2.NBTTagShort;
 import net.minecraft.server.v1_13_R2.NBTTagString;
 import net.minecraft.server.v1_13_R2.PacketPlayOutEntityStatus;
 import net.minecraft.server.v1_13_R2.PacketPlayOutTileEntityData;
+import net.minecraft.server.v1_13_R2.SystemUtils;
 import net.minecraft.server.v1_13_R2.TileEntity;
 import net.minecraft.server.v1_13_R2.World;
 import net.minecraft.server.v1_13_R2.WorldServer;
@@ -101,6 +104,7 @@ import org.bukkit.craftbukkit.v1_13_R2.inventory.CraftItemStack;
 import org.bukkit.craftbukkit.v1_13_R2.util.CraftMagicNumbers;
 import org.bukkit.entity.Player;
 import org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason;
+import org.spigotmc.WatchdogThread;
 
 import javax.annotation.Nullable;
 import java.lang.reflect.Field;
@@ -124,6 +128,7 @@ public final class Spigot_v1_13_R2_2 implements BukkitImplAdapter {
 
     private final Field nbtListTagListField;
     private final Method nbtCreateTagMethod;
+    private final Watchdog watchdog;
 
     // ------------------------------------------------------------------------
     // Code that may break between versions of Minecraft
@@ -145,6 +150,19 @@ public final class Spigot_v1_13_R2_2 implements BukkitImplAdapter {
         new NBTTagString("test").asString();
 
         new DataConverters_1_13_R2_2(getDataVersion(), this).build(ForkJoinPool.commonPool());
+
+        Watchdog watchdog;
+        try {
+            Class.forName("org.spigotmc.WatchdogThread");
+            watchdog = new SpigotWatchdog();
+        } catch (ClassNotFoundException e) {
+            try {
+                watchdog = new MojangWatchdog(((CraftServer) Bukkit.getServer()).getServer());
+            } catch (NoSuchFieldException ex) {
+                watchdog = null;
+            }
+        }
+        this.watchdog = watchdog;
     }
 
     @Override
@@ -611,4 +629,40 @@ public final class Spigot_v1_13_R2_2 implements BukkitImplAdapter {
         }
     }
 
+    @Override
+    public boolean supportsWatchdog() {
+        return watchdog != null;
+    }
+
+    @Override
+    public void tickWatchdog() {
+        watchdog.tick();
+    }
+
+    private static class SpigotWatchdog implements Watchdog {
+        @Override
+        public void tick() {
+            WatchdogThread.tick();
+        }
+    }
+
+    private static class MojangWatchdog implements Watchdog {
+        private final MinecraftServer server;
+        private final Field tickField;
+
+        MojangWatchdog(MinecraftServer server) throws NoSuchFieldException {
+            this.server = server;
+            Field tickField = MinecraftServer.class.getDeclaredField("nextTick");
+            tickField.setAccessible(true);
+            this.tickField = tickField;
+        }
+
+        @Override
+        public void tick() {
+            try {
+                tickField.set(server, SystemUtils.getMonotonicMillis());
+            } catch (IllegalAccessException ignored) {
+            }
+        }
+    }
 }
