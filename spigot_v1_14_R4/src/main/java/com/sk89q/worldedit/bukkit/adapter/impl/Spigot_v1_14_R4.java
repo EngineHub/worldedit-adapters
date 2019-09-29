@@ -44,6 +44,7 @@ import com.sk89q.worldedit.blocks.BaseItemStack;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.bukkit.adapter.BukkitImplAdapter;
 import com.sk89q.worldedit.entity.BaseEntity;
+import com.sk89q.worldedit.extension.platform.Watchdog;
 import com.sk89q.worldedit.internal.Constants;
 import com.sk89q.worldedit.internal.block.BlockStateIdAccess;
 import com.sk89q.worldedit.math.BlockVector3;
@@ -67,6 +68,7 @@ import net.minecraft.server.v1_14_R1.BlockStateEnum;
 import net.minecraft.server.v1_14_R1.BlockStateInteger;
 import net.minecraft.server.v1_14_R1.BlockStateList;
 import net.minecraft.server.v1_14_R1.Chunk;
+import net.minecraft.server.v1_14_R1.DedicatedServer;
 import net.minecraft.server.v1_14_R1.Entity;
 import net.minecraft.server.v1_14_R1.EntityTypes;
 import net.minecraft.server.v1_14_R1.EnumDirection;
@@ -79,6 +81,7 @@ import net.minecraft.server.v1_14_R1.IRegistry;
 import net.minecraft.server.v1_14_R1.ItemActionContext;
 import net.minecraft.server.v1_14_R1.ItemStack;
 import net.minecraft.server.v1_14_R1.MinecraftKey;
+import net.minecraft.server.v1_14_R1.MinecraftServer;
 import net.minecraft.server.v1_14_R1.MovingObjectPositionBlock;
 import net.minecraft.server.v1_14_R1.NBTBase;
 import net.minecraft.server.v1_14_R1.NBTTagByte;
@@ -96,6 +99,7 @@ import net.minecraft.server.v1_14_R1.NBTTagShort;
 import net.minecraft.server.v1_14_R1.NBTTagString;
 import net.minecraft.server.v1_14_R1.PacketPlayOutEntityStatus;
 import net.minecraft.server.v1_14_R1.PacketPlayOutTileEntityData;
+import net.minecraft.server.v1_14_R1.SystemUtils;
 import net.minecraft.server.v1_14_R1.TileEntity;
 import net.minecraft.server.v1_14_R1.Vec3D;
 import net.minecraft.server.v1_14_R1.World;
@@ -111,6 +115,7 @@ import org.bukkit.craftbukkit.v1_14_R1.inventory.CraftItemStack;
 import org.bukkit.craftbukkit.v1_14_R1.util.CraftMagicNumbers;
 import org.bukkit.entity.Player;
 import org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason;
+import org.spigotmc.WatchdogThread;
 
 import javax.annotation.Nullable;
 import java.lang.reflect.Field;
@@ -135,6 +140,7 @@ public final class Spigot_v1_14_R4 implements BukkitImplAdapter {
 
     private final Field nbtListTagListField;
     private final Method nbtCreateTagMethod;
+    private final Watchdog watchdog;
 
     // ------------------------------------------------------------------------
     // Code that may break between versions of Minecraft
@@ -156,6 +162,19 @@ public final class Spigot_v1_14_R4 implements BukkitImplAdapter {
         nbtCreateTagMethod.setAccessible(true);
 
         new DataConverters_1_14_R4(getDataVersion(), this).build(ForkJoinPool.commonPool());
+
+        Watchdog watchdog;
+        try {
+            Class.forName("org.spigotmc.WatchdogThread");
+            watchdog = new SpigotWatchdog();
+        } catch (ClassNotFoundException e) {
+            try {
+                watchdog = new MojangWatchdog(((CraftServer) Bukkit.getServer()).getServer());
+            } catch (NoSuchFieldException ex) {
+                watchdog = null;
+            }
+        }
+        this.watchdog = watchdog;
     }
 
     @Override
@@ -660,4 +679,40 @@ public final class Spigot_v1_14_R4 implements BukkitImplAdapter {
         }
     }
 
+    @Override
+    public boolean supportsWatchdog() {
+        return watchdog != null;
+    }
+
+    @Override
+    public void tickWatchdog() {
+        watchdog.tick();
+    }
+
+    private static class SpigotWatchdog implements Watchdog {
+        @Override
+        public void tick() {
+            WatchdogThread.tick();
+        }
+    }
+
+    private static class MojangWatchdog implements Watchdog {
+        private final DedicatedServer server;
+        private final Field tickField;
+
+        MojangWatchdog(DedicatedServer server) throws NoSuchFieldException {
+            this.server = server;
+            Field tickField = MinecraftServer.class.getDeclaredField("nextTick");
+            tickField.setAccessible(true);
+            this.tickField = tickField;
+        }
+
+        @Override
+        public void tick() {
+            try {
+                tickField.set(server, SystemUtils.getMonotonicMillis());
+            } catch (IllegalAccessException ignored) {
+            }
+        }
+    }
 }

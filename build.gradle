@@ -34,8 +34,7 @@ subprojects {
     }
 
     dependencies {
-        compile "com.sk89q.worldedit:worldedit-bukkit:7.0.1-SNAPSHOT"
-        testCompile "junit:junit:4.11"
+        compile "com.sk89q.worldedit:worldedit-bukkit:7.1.0-SNAPSHOT"
     }
 
     buildDir = new File(rootProject.projectDir, "build/")
@@ -55,7 +54,7 @@ project(':spigot_v1_13_R2') {
 
 project(':spigot_v1_13_R2_2') {
     dependencies {
-        compile "org.bukkit:craftbukkit:1.13.2-R0.1-SNAPSHOT"
+        compile "org.spigotmc:spigot:1.13.2-R0.1-SNAPSHOT"
     }
 }
 
@@ -79,7 +78,7 @@ project(':spigot_v1_14_R3') {
 
 project(':spigot_v1_14_R4') {
     dependencies {
-        compile "org.bukkit:craftbukkit:1.14.4-R0.1-SNAPSHOT"
+        compile "org.spigotmc:spigot:1.14.4-R0.1-SNAPSHOT"
     }
 }
 
