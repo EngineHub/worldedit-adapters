@@ -8,7 +8,7 @@
 *.iws
 
 /bin
-/build
+build/
 /target
 /.gradle
 **/out

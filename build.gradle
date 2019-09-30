@@ -37,7 +37,6 @@ subprojects {
         compile "com.sk89q.worldedit:worldedit-bukkit:7.1.0-SNAPSHOT"
     }
 
-    buildDir = new File(rootProject.projectDir, "build/")
 }
 
 project(':spigot_v1_13_R1') {
