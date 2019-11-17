@@ -62,6 +62,7 @@ import net.minecraft.server.v1_13_R2.BlockStateDirection;
 import net.minecraft.server.v1_13_R2.BlockStateEnum;
 import net.minecraft.server.v1_13_R2.BlockStateInteger;
 import net.minecraft.server.v1_13_R2.BlockStateList;
+import net.minecraft.server.v1_13_R2.Blocks;
 import net.minecraft.server.v1_13_R2.Chunk;
 import net.minecraft.server.v1_13_R2.Entity;
 import net.minecraft.server.v1_13_R2.EntityTypes;
@@ -95,6 +96,7 @@ import net.minecraft.server.v1_13_R2.World;
 import net.minecraft.server.v1_13_R2.WorldServer;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.block.data.BlockData;
 import org.bukkit.craftbukkit.v1_13_R2.CraftServer;
 import org.bukkit.craftbukkit.v1_13_R2.CraftWorld;
 import org.bukkit.craftbukkit.v1_13_R2.block.data.CraftBlockData;
@@ -238,6 +240,13 @@ public final class Spigot_v1_13_R2_2 implements BukkitImplAdapter {
      */
     private static void readEntityIntoTag(Entity entity, NBTTagCompound tag) {
         entity.save(tag);
+    }
+
+    @Override
+    public OptionalInt getInternalBlockStateId(BlockData data) {
+        IBlockData state = ((CraftBlockData) data).getState();
+        int combinedId = Block.getCombinedId(state);
+        return combinedId == 0 && state.getBlock() != Blocks.AIR ? OptionalInt.empty() : OptionalInt.of(combinedId);
     }
 
     @Override
