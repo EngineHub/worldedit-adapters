@@ -21,6 +21,7 @@ package com.sk89q.worldedit.bukkit.adapter.impl;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
+import com.google.common.io.Files;
 import com.sk89q.jnbt.ByteArrayTag;
 import com.sk89q.jnbt.ByteTag;
 import com.sk89q.jnbt.CompoundTag;
@@ -36,14 +37,20 @@ import com.sk89q.jnbt.NBTConstants;
 import com.sk89q.jnbt.ShortTag;
 import com.sk89q.jnbt.StringTag;
 import com.sk89q.jnbt.Tag;
+import com.sk89q.worldedit.EditSession;
+import com.sk89q.worldedit.MaxChangedBlocksException;
 import com.sk89q.worldedit.blocks.BaseItemStack;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
+import com.sk89q.worldedit.bukkit.BukkitWorld;
 import com.sk89q.worldedit.bukkit.adapter.BukkitImplAdapter;
 import com.sk89q.worldedit.entity.BaseEntity;
 import com.sk89q.worldedit.extension.platform.Watchdog;
 import com.sk89q.worldedit.internal.Constants;
 import com.sk89q.worldedit.internal.block.BlockStateIdAccess;
+import com.sk89q.worldedit.math.BlockVector2;
 import com.sk89q.worldedit.math.BlockVector3;
+import com.sk89q.worldedit.regions.CuboidRegion;
+import com.sk89q.worldedit.regions.Region;
 import com.sk89q.worldedit.registry.state.BooleanProperty;
 import com.sk89q.worldedit.registry.state.DirectionalProperty;
 import com.sk89q.worldedit.registry.state.EnumProperty;
@@ -90,9 +97,11 @@ import net.minecraft.server.v1_13_R2.NBTTagShort;
 import net.minecraft.server.v1_13_R2.NBTTagString;
 import net.minecraft.server.v1_13_R2.PacketPlayOutEntityStatus;
 import net.minecraft.server.v1_13_R2.PacketPlayOutTileEntityData;
+import net.minecraft.server.v1_13_R2.PersistentCollection;
 import net.minecraft.server.v1_13_R2.SystemUtils;
 import net.minecraft.server.v1_13_R2.TileEntity;
 import net.minecraft.server.v1_13_R2.World;
+import net.minecraft.server.v1_13_R2.WorldNBTStorage;
 import net.minecraft.server.v1_13_R2.WorldServer;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -106,9 +115,11 @@ import org.bukkit.craftbukkit.v1_13_R2.inventory.CraftItemStack;
 import org.bukkit.craftbukkit.v1_13_R2.util.CraftMagicNumbers;
 import org.bukkit.entity.Player;
 import org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason;
+import org.bukkit.generator.ChunkGenerator;
 import org.spigotmc.WatchdogThread;
 
 import javax.annotation.Nullable;
+import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -497,6 +508,45 @@ public final class Spigot_v1_13_R2_2 implements BukkitImplAdapter {
         final BaseItemStack weStack = new BaseItemStack(BukkitAdapter.asItemType(itemStack.getType()), itemStack.getAmount());
         weStack.setNbtData(((CompoundTag) toNative(nmsStack.getTag())));
         return weStack;
+    }
+
+    @Override
+    public boolean regenerate(org.bukkit.World bukkitWorld, Region region, EditSession editSession) {
+        WorldServer originalWorld = ((CraftWorld) bukkitWorld).getHandle();
+
+        File saveFolder = Files.createTempDir();
+        // register this just in case something goes wrong
+        // normally it should be deleted at the end of this method
+        saveFolder.deleteOnExit();
+        try {
+            org.bukkit.World.Environment env = bukkitWorld.getEnvironment();
+            ChunkGenerator gen = bukkitWorld.getGenerator();
+            MinecraftServer server = originalWorld.getServer().getServer();
+            WorldNBTStorage saveHandler = new WorldNBTStorage(saveFolder,
+                    originalWorld.getDataManager().getDirectory().getName(), server, server.dataConverterManager);
+            try (WorldServer freshWorld = new WorldServer(server, saveHandler, new PersistentCollection(saveHandler),
+                    originalWorld.worldData, originalWorld.worldProvider.getDimensionManager(),
+                    originalWorld.methodProfiler, env, gen)) {
+
+                // Pre-gen all the chunks
+                // We need to also pull one more chunk in every direction
+                CuboidRegion expandedPreGen = new CuboidRegion(region.getMinimumPoint().subtract(16, 0, 16),
+                        region.getMaximumPoint().add(16, 0, 16));
+                for (BlockVector2 chunk : expandedPreGen.getChunks()) {
+                    freshWorld.getChunkAt(chunk.getBlockX(), chunk.getBlockZ());
+                }
+
+                BukkitWorld from = new BukkitWorld(new CraftWorld(freshWorld, gen, env));
+                for (BlockVector3 vec : region) {
+                    editSession.setBlock(vec, from.getFullBlock(vec));
+                }
+            }
+        } catch (MaxChangedBlocksException e) {
+            throw new RuntimeException(e);
+        } finally {
+            saveFolder.delete();
+        }
+        return true;
     }
 
     // ------------------------------------------------------------------------
