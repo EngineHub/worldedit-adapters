@@ -24,6 +24,7 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
+import com.google.common.io.Files;
 import com.sk89q.jnbt.ByteArrayTag;
 import com.sk89q.jnbt.ByteTag;
 import com.sk89q.jnbt.CompoundTag;
@@ -39,15 +40,21 @@ import com.sk89q.jnbt.NBTConstants;
 import com.sk89q.jnbt.ShortTag;
 import com.sk89q.jnbt.StringTag;
 import com.sk89q.jnbt.Tag;
+import com.sk89q.worldedit.EditSession;
+import com.sk89q.worldedit.MaxChangedBlocksException;
 import com.sk89q.worldedit.blocks.BaseItem;
 import com.sk89q.worldedit.blocks.BaseItemStack;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
+import com.sk89q.worldedit.bukkit.BukkitWorld;
 import com.sk89q.worldedit.bukkit.adapter.BukkitImplAdapter;
 import com.sk89q.worldedit.entity.BaseEntity;
 import com.sk89q.worldedit.extension.platform.Watchdog;
 import com.sk89q.worldedit.internal.Constants;
 import com.sk89q.worldedit.internal.block.BlockStateIdAccess;
+import com.sk89q.worldedit.math.BlockVector2;
 import com.sk89q.worldedit.math.BlockVector3;
+import com.sk89q.worldedit.regions.CuboidRegion;
+import com.sk89q.worldedit.regions.Region;
 import com.sk89q.worldedit.registry.state.BooleanProperty;
 import com.sk89q.worldedit.registry.state.DirectionalProperty;
 import com.sk89q.worldedit.registry.state.EnumProperty;
@@ -69,6 +76,8 @@ import net.minecraft.server.v1_14_R1.BlockStateInteger;
 import net.minecraft.server.v1_14_R1.BlockStateList;
 import net.minecraft.server.v1_14_R1.Blocks;
 import net.minecraft.server.v1_14_R1.Chunk;
+import net.minecraft.server.v1_14_R1.ChunkCoordIntPair;
+import net.minecraft.server.v1_14_R1.ChunkStatus;
 import net.minecraft.server.v1_14_R1.DedicatedServer;
 import net.minecraft.server.v1_14_R1.Entity;
 import net.minecraft.server.v1_14_R1.EntityTypes;
@@ -104,10 +113,13 @@ import net.minecraft.server.v1_14_R1.SystemUtils;
 import net.minecraft.server.v1_14_R1.TileEntity;
 import net.minecraft.server.v1_14_R1.Vec3D;
 import net.minecraft.server.v1_14_R1.World;
+import net.minecraft.server.v1_14_R1.WorldLoadListener;
+import net.minecraft.server.v1_14_R1.WorldNBTStorage;
 import net.minecraft.server.v1_14_R1.WorldServer;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.block.data.BlockData;
+import org.bukkit.World.Environment;
 import org.bukkit.craftbukkit.v1_14_R1.CraftServer;
 import org.bukkit.craftbukkit.v1_14_R1.CraftWorld;
 import org.bukkit.craftbukkit.v1_14_R1.block.data.CraftBlockData;
@@ -117,9 +129,12 @@ import org.bukkit.craftbukkit.v1_14_R1.inventory.CraftItemStack;
 import org.bukkit.craftbukkit.v1_14_R1.util.CraftMagicNumbers;
 import org.bukkit.entity.Player;
 import org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason;
+import org.bukkit.generator.ChunkGenerator;
 import org.spigotmc.WatchdogThread;
 
 import javax.annotation.Nullable;
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -550,6 +565,47 @@ public final class Spigot_v1_14_R4 implements BukkitImplAdapter {
         return result == EnumInteractionResult.SUCCESS;
     }
 
+    @Override
+    public boolean regenerate(org.bukkit.World bukkitWorld, Region region, EditSession editSession) {
+        WorldServer originalWorld = ((CraftWorld) bukkitWorld).getHandle();
+
+        File saveFolder = Files.createTempDir();
+        // register this just in case something goes wrong
+        // normally it should be deleted at the end of this method
+        saveFolder.deleteOnExit();
+        try {
+            Environment env = bukkitWorld.getEnvironment();
+            ChunkGenerator gen = bukkitWorld.getGenerator();
+            MinecraftServer server = originalWorld.getServer().getServer();
+            WorldNBTStorage saveHandler = new WorldNBTStorage(saveFolder,
+                    originalWorld.getDataManager().getDirectory().getName(), server, server.dataConverterManager);
+            try (WorldServer freshWorld = new WorldServer(server, server.executorService, saveHandler,
+                    originalWorld.worldData, originalWorld.worldProvider.getDimensionManager(),
+                    originalWorld.getMethodProfiler(), new NoOpWorldLoadListener(), env, gen)) {
+
+                // Pre-gen all the chunks
+                // We need to also pull one more chunk in every direction
+                CuboidRegion expandedPreGen = new CuboidRegion(region.getMinimumPoint().subtract(16, 0, 16),
+                                                                region.getMaximumPoint().add(16, 0, 16));
+                for (BlockVector2 chunk : expandedPreGen.getChunks()) {
+                    freshWorld.getChunkAt(chunk.getBlockX(), chunk.getBlockZ());
+                }
+
+                BukkitWorld from = new BukkitWorld(new CraftWorld(freshWorld, gen, env));
+                for (BlockVector3 vec : region) {
+                    editSession.setBlock(vec, from.getFullBlock(vec));
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        } catch (MaxChangedBlocksException e) {
+            throw new RuntimeException(e);
+        } finally {
+            saveFolder.delete();
+        }
+        return true;
+    }
+
     // ------------------------------------------------------------------------
     // Code that is less likely to break
     // ------------------------------------------------------------------------
@@ -722,6 +778,20 @@ public final class Spigot_v1_14_R4 implements BukkitImplAdapter {
                 tickField.set(server, SystemUtils.getMonotonicMillis());
             } catch (IllegalAccessException ignored) {
             }
+        }
+    }
+
+    private static class NoOpWorldLoadListener implements WorldLoadListener {
+        @Override
+        public void a(ChunkCoordIntPair chunkCoordIntPair) {
+        }
+
+        @Override
+        public void a(ChunkCoordIntPair chunkCoordIntPair, @Nullable ChunkStatus chunkStatus) {
+        }
+
+        @Override
+        public void b() {
         }
     }
 }
