@@ -105,6 +105,7 @@ import net.minecraft.server.v1_13_R2.WorldNBTStorage;
 import net.minecraft.server.v1_13_R2.WorldServer;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.World.Environment;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.craftbukkit.v1_13_R2.CraftServer;
 import org.bukkit.craftbukkit.v1_13_R2.CraftWorld;
@@ -116,6 +117,7 @@ import org.bukkit.craftbukkit.v1_13_R2.util.CraftMagicNumbers;
 import org.bukkit.entity.Player;
 import org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason;
 import org.bukkit.generator.ChunkGenerator;
+import org.spigotmc.SpigotConfig;
 import org.spigotmc.WatchdogThread;
 
 import javax.annotation.Nullable;
@@ -176,6 +178,11 @@ public final class Spigot_v1_13_R2_2 implements BukkitImplAdapter {
             }
         }
         this.watchdog = watchdog;
+
+        try {
+            Class.forName("org.spigotmc.SpigotConfig");
+            SpigotConfig.config.set("world-settings.worldeditregentempworld.verbose", false);
+        } catch (ClassNotFoundException ignored) {}
     }
 
     @Override
@@ -518,8 +525,11 @@ public final class Spigot_v1_13_R2_2 implements BukkitImplAdapter {
         // register this just in case something goes wrong
         // normally it should be deleted at the end of this method
         saveFolder.deleteOnExit();
+        saveFolder.deleteOnExit();
+        String worldName = originalWorld.worldData.getName();
         try {
-            org.bukkit.World.Environment env = bukkitWorld.getEnvironment();
+            originalWorld.worldData.checkName("worldeditregentempworld");
+            Environment env = bukkitWorld.getEnvironment();
             ChunkGenerator gen = bukkitWorld.getGenerator();
             MinecraftServer server = originalWorld.getServer().getServer();
             WorldNBTStorage saveHandler = new WorldNBTStorage(saveFolder,
@@ -527,6 +537,7 @@ public final class Spigot_v1_13_R2_2 implements BukkitImplAdapter {
             try (WorldServer freshWorld = new WorldServer(server, saveHandler, new PersistentCollection(saveHandler),
                     originalWorld.worldData, originalWorld.worldProvider.getDimensionManager(),
                     originalWorld.methodProfiler, env, gen)) {
+                freshWorld.savingDisabled = true;
 
                 // Pre-gen all the chunks
                 // We need to also pull one more chunk in every direction
@@ -542,6 +553,7 @@ public final class Spigot_v1_13_R2_2 implements BukkitImplAdapter {
                 }
             }
         } catch (MaxChangedBlocksException e) {
+            originalWorld.worldData.checkName(worldName);
             throw new RuntimeException(e);
         } finally {
             saveFolder.delete();
