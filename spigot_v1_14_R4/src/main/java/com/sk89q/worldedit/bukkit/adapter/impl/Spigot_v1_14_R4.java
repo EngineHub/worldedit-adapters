@@ -130,6 +130,7 @@ import org.bukkit.craftbukkit.v1_14_R1.util.CraftMagicNumbers;
 import org.bukkit.entity.Player;
 import org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason;
 import org.bukkit.generator.ChunkGenerator;
+import org.spigotmc.SpigotConfig;
 import org.spigotmc.WatchdogThread;
 
 import javax.annotation.Nullable;
@@ -192,6 +193,11 @@ public final class Spigot_v1_14_R4 implements BukkitImplAdapter {
             }
         }
         this.watchdog = watchdog;
+
+        try {
+            Class.forName("org.spigotmc.SpigotConfig");
+            SpigotConfig.config.set("world-settings.worldeditregentempworld.verbose", false);
+        } catch (ClassNotFoundException ignored) {}
     }
 
     @Override
@@ -573,7 +579,9 @@ public final class Spigot_v1_14_R4 implements BukkitImplAdapter {
         // register this just in case something goes wrong
         // normally it should be deleted at the end of this method
         saveFolder.deleteOnExit();
+        String worldName = originalWorld.worldData.getName();
         try {
+            originalWorld.worldData.setName("worldeditregentempworld");
             Environment env = bukkitWorld.getEnvironment();
             ChunkGenerator gen = bukkitWorld.getGenerator();
             MinecraftServer server = originalWorld.getServer().getServer();
@@ -582,6 +590,7 @@ public final class Spigot_v1_14_R4 implements BukkitImplAdapter {
             try (WorldServer freshWorld = new WorldServer(server, server.executorService, saveHandler,
                     originalWorld.worldData, originalWorld.worldProvider.getDimensionManager(),
                     originalWorld.getMethodProfiler(), new NoOpWorldLoadListener(), env, gen)) {
+                freshWorld.savingDisabled = true;
 
                 // Pre-gen all the chunks
                 // We need to also pull one more chunk in every direction
@@ -601,6 +610,7 @@ public final class Spigot_v1_14_R4 implements BukkitImplAdapter {
         } catch (MaxChangedBlocksException e) {
             throw new RuntimeException(e);
         } finally {
+            originalWorld.worldData.setName(worldName);
             saveFolder.delete();
         }
         return true;
