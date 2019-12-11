@@ -81,6 +81,12 @@ project(':spigot_v1_14_R4') {
     }
 }
 
+project(':spigot_v1_15_R1') {
+    dependencies {
+        compile "org.spigotmc:spigot:1.15-R0.1-SNAPSHOT"
+    }
+}
+
 subprojects.each { subproject -> evaluationDependsOn( subproject.path ) }
 jar.dependsOn subprojects.tasks['classes']
 jar {
