@@ -137,7 +137,6 @@ import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -168,7 +167,7 @@ public final class Spigot_v1_15_R1 implements BukkitImplAdapter {
         CraftServer.class.cast(Bukkit.getServer());
 
 
-        if (getDataVersion() < 1976) throw new UnsupportedClassVersionError("Not 1.14.4!");
+        if (getDataVersion() < 2225 || getDataVersion() > 2227) throw new UnsupportedClassVersionError("Not 1.15/1.15.1!");
 
         // The list of tags on an NBTTagList
         nbtListTagListField = NBTTagList.class.getDeclaredField("list");
