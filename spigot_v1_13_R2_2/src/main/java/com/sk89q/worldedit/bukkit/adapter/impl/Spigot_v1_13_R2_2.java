@@ -101,6 +101,7 @@ import net.minecraft.server.v1_13_R2.PersistentCollection;
 import net.minecraft.server.v1_13_R2.SystemUtils;
 import net.minecraft.server.v1_13_R2.TileEntity;
 import net.minecraft.server.v1_13_R2.World;
+import net.minecraft.server.v1_13_R2.WorldData;
 import net.minecraft.server.v1_13_R2.WorldNBTStorage;
 import net.minecraft.server.v1_13_R2.WorldServer;
 import org.bukkit.Bukkit;
@@ -526,16 +527,18 @@ public final class Spigot_v1_13_R2_2 implements BukkitImplAdapter {
         // normally it should be deleted at the end of this method
         saveFolder.deleteOnExit();
         saveFolder.deleteOnExit();
-        String worldName = originalWorld.worldData.getName();
         try {
-            originalWorld.worldData.checkName("worldeditregentempworld");
             Environment env = bukkitWorld.getEnvironment();
             ChunkGenerator gen = bukkitWorld.getGenerator();
             MinecraftServer server = originalWorld.getServer().getServer();
+
+            WorldData newWorldData = new WorldData(originalWorld.worldData.a((NBTTagCompound) null),
+                    server.dataConverterManager, getDataVersion(), null);
+            newWorldData.checkName("worldeditregentempworld");
             WorldNBTStorage saveHandler = new WorldNBTStorage(saveFolder,
                     originalWorld.getDataManager().getDirectory().getName(), server, server.dataConverterManager);
             try (WorldServer freshWorld = new WorldServer(server, saveHandler, new PersistentCollection(saveHandler),
-                    originalWorld.worldData, originalWorld.worldProvider.getDimensionManager(),
+                    newWorldData, originalWorld.worldProvider.getDimensionManager(),
                     originalWorld.methodProfiler, env, gen)) {
                 freshWorld.savingDisabled = true;
 
@@ -547,13 +550,13 @@ public final class Spigot_v1_13_R2_2 implements BukkitImplAdapter {
                     freshWorld.getChunkAt(chunk.getBlockX(), chunk.getBlockZ());
                 }
 
-                BukkitWorld from = new BukkitWorld(new CraftWorld(freshWorld, gen, env));
+                CraftWorld craftWorld = new CraftWorld(freshWorld, gen, env);
+                BukkitWorld from = new BukkitWorld(craftWorld);
                 for (BlockVector3 vec : region) {
                     editSession.setBlock(vec, from.getFullBlock(vec));
                 }
             }
         } catch (MaxChangedBlocksException e) {
-            originalWorld.worldData.checkName(worldName);
             throw new RuntimeException(e);
         } finally {
             saveFolder.delete();

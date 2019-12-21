@@ -113,6 +113,7 @@ import net.minecraft.server.v1_14_R1.SystemUtils;
 import net.minecraft.server.v1_14_R1.TileEntity;
 import net.minecraft.server.v1_14_R1.Vec3D;
 import net.minecraft.server.v1_14_R1.World;
+import net.minecraft.server.v1_14_R1.WorldData;
 import net.minecraft.server.v1_14_R1.WorldLoadListener;
 import net.minecraft.server.v1_14_R1.WorldNBTStorage;
 import net.minecraft.server.v1_14_R1.WorldServer;
@@ -579,16 +580,19 @@ public final class Spigot_v1_14_R4 implements BukkitImplAdapter {
         // register this just in case something goes wrong
         // normally it should be deleted at the end of this method
         saveFolder.deleteOnExit();
-        String worldName = originalWorld.worldData.getName();
         try {
-            originalWorld.worldData.setName("worldeditregentempworld");
             Environment env = bukkitWorld.getEnvironment();
             ChunkGenerator gen = bukkitWorld.getGenerator();
             MinecraftServer server = originalWorld.getServer().getServer();
+
+            WorldData newWorldData = new WorldData(originalWorld.worldData.a((NBTTagCompound) null),
+                    server.dataConverterManager, getDataVersion(), null);
+            newWorldData.setName("worldeditregentempworld");
             WorldNBTStorage saveHandler = new WorldNBTStorage(saveFolder,
                     originalWorld.getDataManager().getDirectory().getName(), server, server.dataConverterManager);
+
             try (WorldServer freshWorld = new WorldServer(server, server.executorService, saveHandler,
-                    originalWorld.worldData, originalWorld.worldProvider.getDimensionManager(),
+                    newWorldData, originalWorld.worldProvider.getDimensionManager(),
                     originalWorld.getMethodProfiler(), new NoOpWorldLoadListener(), env, gen)) {
                 freshWorld.savingDisabled = true;
 
@@ -600,7 +604,8 @@ public final class Spigot_v1_14_R4 implements BukkitImplAdapter {
                     freshWorld.getChunkAt(chunk.getBlockX(), chunk.getBlockZ());
                 }
 
-                BukkitWorld from = new BukkitWorld(new CraftWorld(freshWorld, gen, env));
+                CraftWorld craftWorld = new CraftWorld(freshWorld, gen, env);
+                BukkitWorld from = new BukkitWorld(craftWorld);
                 for (BlockVector3 vec : region) {
                     editSession.setBlock(vec, from.getFullBlock(vec));
                 }
@@ -610,7 +615,6 @@ public final class Spigot_v1_14_R4 implements BukkitImplAdapter {
         } catch (MaxChangedBlocksException e) {
             throw new RuntimeException(e);
         } finally {
-            originalWorld.worldData.setName(worldName);
             saveFolder.delete();
         }
         return true;
