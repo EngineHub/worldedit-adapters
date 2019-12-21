@@ -551,9 +551,11 @@ public final class Spigot_v1_13_R2_2 implements BukkitImplAdapter {
                 }
 
                 CraftWorld craftWorld = new CraftWorld(freshWorld, gen, env);
-                BukkitWorld from = new BukkitWorld(craftWorld);
-                for (BlockVector3 vec : region) {
-                    editSession.setBlock(vec, from.getFullBlock(vec));
+                synchronized (craftWorld) {
+                    BukkitWorld from = new BukkitWorld(craftWorld);
+                    for (BlockVector3 vec : region) {
+                        editSession.setBlock(vec, from.getFullBlock(vec));
+                    }
                 }
             }
         } catch (MaxChangedBlocksException e) {
