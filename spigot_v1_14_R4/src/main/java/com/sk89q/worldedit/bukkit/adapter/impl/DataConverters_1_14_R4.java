@@ -1222,6 +1222,46 @@ class DataConverters_1_14_R4 extends DataFixerBuilder implements com.sk89q.world
             materials[2265] = "minecraft:record_ward";
             materials[2266] = "minecraft:record_11";
             materials[2267] = "minecraft:record_wait";
+            // Paper start
+            materials[409] = "minecraft:prismarine_shard";
+            materials[410] = "minecraft:prismarine_crystals";
+            materials[411] = "minecraft:rabbit";
+            materials[412] = "minecraft:cooked_rabbit";
+            materials[413] = "minecraft:rabbit_stew";
+            materials[414] = "minecraft:rabbit_foot";
+            materials[415] = "minecraft:rabbit_hide";
+            materials[416] = "minecraft:armor_stand";
+            materials[423] = "minecraft:mutton";
+            materials[424] = "minecraft:cooked_mutton";
+            materials[425] = "minecraft:banner";
+            materials[426] = "minecraft:end_crystal";
+            materials[427] = "minecraft:spruce_door";
+            materials[428] = "minecraft:birch_door";
+            materials[429] = "minecraft:jungle_door";
+            materials[430] = "minecraft:acacia_door";
+            materials[431] = "minecraft:dark_oak_door";
+            materials[432] = "minecraft:chorus_fruit";
+            materials[433] = "minecraft:chorus_fruit_popped";
+            materials[434] = "minecraft:beetroot";
+            materials[435] = "minecraft:beetroot_seeds";
+            materials[436] = "minecraft:beetroot_soup";
+            materials[437] = "minecraft:dragon_breath";
+            materials[438] = "minecraft:splash_potion";
+            materials[439] = "minecraft:spectral_arrow";
+            materials[440] = "minecraft:tipped_arrow";
+            materials[441] = "minecraft:lingering_potion";
+            materials[442] = "minecraft:shield";
+            materials[443] = "minecraft:elytra";
+            materials[444] = "minecraft:spruce_boat";
+            materials[445] = "minecraft:birch_boat";
+            materials[446] = "minecraft:jungle_boat";
+            materials[447] = "minecraft:acacia_boat";
+            materials[448] = "minecraft:dark_oak_boat";
+            materials[449] = "minecraft:totem_of_undying";
+            materials[450] = "minecraft:shulker_shell";
+            materials[452] = "minecraft:iron_nugget";
+            materials[453] = "minecraft:knowledge_book";
+            // Paper end
         }
     }
 
