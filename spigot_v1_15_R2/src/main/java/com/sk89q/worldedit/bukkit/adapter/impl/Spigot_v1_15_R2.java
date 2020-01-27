@@ -332,11 +332,11 @@ public final class Spigot_v1_15_R2 implements BukkitImplAdapter {
 
             if (!world.isClientSide && (i & 1) != 0) {
                 world.getType(blockposition.west()).doPhysics(world, blockposition.west(), oldBlock.getBlock(), blockposition, false);
-                world.getType(blockposition.east()).doPhysics(world, blockposition.west(), oldBlock.getBlock(), blockposition, false);
-                world.getType(blockposition.down()).doPhysics(world, blockposition.west(), oldBlock.getBlock(), blockposition, false);
-                world.getType(blockposition.up()).doPhysics(world, blockposition.west(), oldBlock.getBlock(), blockposition, false);
-                world.getType(blockposition.north()).doPhysics(world, blockposition.west(), oldBlock.getBlock(), blockposition, false);
-                world.getType(blockposition.south()).doPhysics(world, blockposition.west(), oldBlock.getBlock(), blockposition, false);
+                world.getType(blockposition.east()).doPhysics(world, blockposition.east(), oldBlock.getBlock(), blockposition, false);
+                world.getType(blockposition.down()).doPhysics(world, blockposition.down(), oldBlock.getBlock(), blockposition, false);
+                world.getType(blockposition.up()).doPhysics(world, blockposition.up(), oldBlock.getBlock(), blockposition, false);
+                world.getType(blockposition.north()).doPhysics(world, blockposition.north(), oldBlock.getBlock(), blockposition, false);
+                world.getType(blockposition.south()).doPhysics(world, blockposition.south(), oldBlock.getBlock(), blockposition, false);
 
                 if (newBlock.isComplexRedstone()) {
                     world.updateAdjacentComparators(blockposition, newBlock.getBlock());
