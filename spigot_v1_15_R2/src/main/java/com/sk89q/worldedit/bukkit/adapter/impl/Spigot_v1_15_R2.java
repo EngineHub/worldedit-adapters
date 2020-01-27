@@ -109,6 +109,7 @@ import net.minecraft.server.v1_15_R1.NBTTagShort;
 import net.minecraft.server.v1_15_R1.NBTTagString;
 import net.minecraft.server.v1_15_R1.PacketPlayOutEntityStatus;
 import net.minecraft.server.v1_15_R1.PacketPlayOutTileEntityData;
+import net.minecraft.server.v1_15_R1.PlayerChunk;
 import net.minecraft.server.v1_15_R1.SystemUtils;
 import net.minecraft.server.v1_15_R1.TileEntity;
 import net.minecraft.server.v1_15_R1.Vec3D;
@@ -318,6 +319,42 @@ public final class Spigot_v1_15_R2 implements BukkitImplAdapter {
         return state.toBaseBlock();
     }
 
+    private void updateNeighbours(World world, BlockPosition blockposition, Chunk chunk, IBlockData oldBlock, IBlockData newBlock, IBlockData actualBlock, int i) {
+        if (actualBlock == newBlock) {
+            if (oldBlock != actualBlock) {
+                world.b(blockposition, oldBlock, actualBlock);
+            }
+
+            if ((i & 2) != 0 && (!world.isClientSide || (i & 4) == 0) && (world.isClientSide || chunk == null || chunk.getState() != null && chunk.getState().isAtLeast(
+                    PlayerChunk.State.TICKING))) {
+                world.notify(blockposition, oldBlock, newBlock, i);
+            }
+
+            if (!world.isClientSide && (i & 1) != 0) {
+                world.getType(blockposition.west()).doPhysics(world, blockposition.west(), oldBlock.getBlock(), blockposition, false);
+                world.getType(blockposition.east()).doPhysics(world, blockposition.west(), oldBlock.getBlock(), blockposition, false);
+                world.getType(blockposition.down()).doPhysics(world, blockposition.west(), oldBlock.getBlock(), blockposition, false);
+                world.getType(blockposition.up()).doPhysics(world, blockposition.west(), oldBlock.getBlock(), blockposition, false);
+                world.getType(blockposition.north()).doPhysics(world, blockposition.west(), oldBlock.getBlock(), blockposition, false);
+                world.getType(blockposition.south()).doPhysics(world, blockposition.west(), oldBlock.getBlock(), blockposition, false);
+
+                if (newBlock.isComplexRedstone()) {
+                    world.updateAdjacentComparators(blockposition, newBlock.getBlock());
+                }
+            }
+
+            if ((i & 16) == 0) {
+                int j = i & -2;
+                oldBlock.b(world, blockposition, j);
+
+                newBlock.a(world, blockposition, j);
+                newBlock.b(world, blockposition, j);
+            }
+
+            world.a(blockposition, oldBlock, actualBlock);
+        }
+    }
+
     @Override
     public boolean setBlock(Location location, BlockStateHolder state, boolean notifyAndLight) {
         checkNotNull(location);
@@ -367,7 +404,7 @@ public final class Spigot_v1_15_R2 implements BukkitImplAdapter {
 
         if (successful && notifyAndLight) {
             craftWorld.getHandle().getChunkProvider().getLightEngine().a(blockPos); // server should do lighting for us
-            craftWorld.getHandle().notifyAndUpdatePhysics(blockPos, chunk, old, newState, newState, 1 | 2);
+            updateNeighbours(craftWorld.getHandle(), blockPos, chunk, old, newState, newState, 1 | 2);
         }
 
         return successful;
@@ -414,7 +451,7 @@ public final class Spigot_v1_15_R2 implements BukkitImplAdapter {
         IBlockData oldData = ((CraftBlockData) BukkitAdapter.adapt(previousType)).getState();
         IBlockData newData = craftWorld.getHandle().getType(blockPosition);
 
-        //        craftWorld.getHandle().r(blockPosition); // Re-light
+        craftWorld.getHandle().getChunkProvider().getLightEngine().a(blockPosition); // server should do lighting for us
         craftWorld.getHandle().notifyAndUpdatePhysics(blockPosition, null, oldData, newData, newData, 1 | 2); // Update
     }
 
