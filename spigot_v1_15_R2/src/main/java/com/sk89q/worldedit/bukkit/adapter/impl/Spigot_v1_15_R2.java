@@ -452,7 +452,7 @@ public final class Spigot_v1_15_R2 implements BukkitImplAdapter {
         IBlockData newData = craftWorld.getHandle().getType(blockPosition);
 
         craftWorld.getHandle().getChunkProvider().getLightEngine().a(blockPosition); // server should do lighting for us
-        craftWorld.getHandle().notifyAndUpdatePhysics(blockPosition, null, oldData, newData, newData, 1 | 2); // Update
+        updateNeighbours(craftWorld.getHandle(), blockPosition, null, oldData, newData, newData, 1 | 2); // Update
     }
 
     @Override
