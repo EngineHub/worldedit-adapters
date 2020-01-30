@@ -77,6 +77,7 @@ import net.minecraft.server.v1_15_R1.BlockStateList;
 import net.minecraft.server.v1_15_R1.Blocks;
 import net.minecraft.server.v1_15_R1.Chunk;
 import net.minecraft.server.v1_15_R1.ChunkCoordIntPair;
+import net.minecraft.server.v1_15_R1.ChunkProviderServer;
 import net.minecraft.server.v1_15_R1.ChunkStatus;
 import net.minecraft.server.v1_15_R1.DedicatedServer;
 import net.minecraft.server.v1_15_R1.Entity;
@@ -327,7 +328,7 @@ public final class Spigot_v1_15_R2 implements BukkitImplAdapter {
 
             if ((i & 2) != 0 && (!world.isClientSide || (i & 4) == 0) && (world.isClientSide || chunk == null || chunk.getState() != null && chunk.getState().isAtLeast(
                     PlayerChunk.State.TICKING))) {
-                world.notify(blockposition, oldBlock, newBlock, i);
+                ((ChunkProviderServer) world.getChunkProvider()).flagDirty(blockposition);
             }
 
             if (!world.isClientSide && (i & 1) != 0) {
