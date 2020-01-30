@@ -323,9 +323,9 @@ public final class Spigot_v1_13_R2_2 implements BukkitImplAdapter {
         BlockPosition pos = new BlockPosition(x, y, z);
         IBlockData old = chunk.getBlockData(x, y, z);
         IBlockData newState;
-        final OptionalInt blockStateId = BlockStateIdAccess.getBlockStateId(state.toImmutableState());
-        if (blockStateId.isPresent()) {
-            newState = Block.getByCombinedId(blockStateId.getAsInt());
+        final int blockStateId = BlockStateIdAccess.getBlockStateId(state.toImmutableState());
+        if (BlockStateIdAccess.isValidInternalId(blockStateId)) {
+            newState = Block.getByCombinedId(blockStateId);
         } else {
             Block mcBlock = IRegistry.BLOCK.get(MinecraftKey.a(state.getBlockType().getId()));
             newState = mcBlock.getBlockData();
