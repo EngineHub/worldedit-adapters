@@ -133,6 +133,7 @@ import org.bukkit.craftbukkit.v1_15_R1.entity.CraftPlayer;
 import org.bukkit.craftbukkit.v1_15_R1.inventory.CraftItemStack;
 import org.bukkit.craftbukkit.v1_15_R1.util.CraftMagicNumbers;
 import org.bukkit.entity.Player;
+import org.bukkit.event.block.BlockPhysicsEvent;
 import org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason;
 import org.bukkit.generator.ChunkGenerator;
 import org.spigotmc.SpigotConfig;
@@ -322,39 +323,75 @@ public final class Spigot_v1_15_R2 implements BukkitImplAdapter {
         return state.toBaseBlock();
     }
 
-    private void updateNeighbours(World world, BlockPosition blockposition, Chunk chunk, IBlockData oldBlock, IBlockData newBlock, IBlockData actualBlock, int i) {
+    private static final EnumDirection[] neighbourOrder = {
+            EnumDirection.WEST, EnumDirection.EAST,
+            EnumDirection.DOWN, EnumDirection.UP,
+            EnumDirection.NORTH, EnumDirection.SOUTH
+    };
+
+    /**
+     * This is a heavily modified function stripped from MC to apply worldedit-modifications.
+     *
+     * @see World#notifyAndUpdatePhysics
+     */
+    private void updateNeighbours(World world, BlockPosition blockposition, Chunk chunk, IBlockData oldBlock, IBlockData newBlock,
+            IBlockData actualBlock, SideEffectApplier sideEffectApplier) {
         if (actualBlock == newBlock) {
             if (oldBlock != actualBlock) {
+                // This seems to do nothing?
                 world.b(blockposition, oldBlock, actualBlock);
             }
 
-            if ((i & 2) != 0 && (!world.isClientSide || (i & 4) == 0) && (world.isClientSide || chunk == null || chunk.getState() != null && chunk.getState().isAtLeast(
-                    PlayerChunk.State.TICKING))) {
-                ((ChunkProviderServer) world.getChunkProvider()).flagDirty(blockposition);
+            // Remove redundant branches
+            if (world.isClientSide || chunk == null || chunk.getState() != null && chunk.getState().isAtLeast(PlayerChunk.State.TICKING)) {
+                if (sideEffectApplier.shouldApply(SideEffect.ENTITY_AI)) {
+                    world.notify(blockposition, oldBlock, newBlock, 1 | 2);
+                } else {
+                    // If we want to skip entity AI, just call the chunk dirty flag.
+                    ((ChunkProviderServer) world.getChunkProvider()).flagDirty(blockposition);
+                }
             }
 
-            if (!world.isClientSide && (i & 1) != 0) {
-                world.getType(blockposition.west()).doPhysics(world, blockposition.west(), oldBlock.getBlock(), blockposition, false);
-                world.getType(blockposition.east()).doPhysics(world, blockposition.east(), oldBlock.getBlock(), blockposition, false);
-                world.getType(blockposition.down()).doPhysics(world, blockposition.down(), oldBlock.getBlock(), blockposition, false);
-                world.getType(blockposition.up()).doPhysics(world, blockposition.up(), oldBlock.getBlock(), blockposition, false);
-                world.getType(blockposition.north()).doPhysics(world, blockposition.north(), oldBlock.getBlock(), blockposition, false);
-                world.getType(blockposition.south()).doPhysics(world, blockposition.south(), oldBlock.getBlock(), blockposition, false);
+            if (!world.isClientSide && sideEffectApplier.shouldApply(SideEffect.NEIGHBOURS)) {
+                if (sideEffectApplier.shouldApply(SideEffect.PLUGIN_EVENTS)) {
+                    world.update(blockposition, oldBlock.getBlock());
+                } else {
+                    // When we don't want events, manually run the physics without them.
+                    // Un-nest neighbour updating
+                    for (EnumDirection direction : neighbourOrder) {
+                        BlockPosition shifted = blockposition.shift(direction);
+                        world.getType(shifted).doPhysics(world, shifted, oldBlock.getBlock(), blockposition, false);
+                    }
+                }
 
                 if (newBlock.isComplexRedstone()) {
                     world.updateAdjacentComparators(blockposition, newBlock.getBlock());
                 }
             }
 
-            if ((i & 16) == 0) {
-                int j = i & -2;
-                oldBlock.b(world, blockposition, j);
+            // Make connection updates optional
+            if (sideEffectApplier.shouldApply(SideEffect.CONNECTIONS)) {
+                // Seems to notify observers
+                oldBlock.b(world, blockposition, 2);
+                if (sideEffectApplier.shouldApply(SideEffect.PLUGIN_EVENTS)) {
+                    CraftWorld craftWorld = world.getWorld();
+                    if (craftWorld != null) {
+                        BlockPhysicsEvent event = new BlockPhysicsEvent(craftWorld.getBlockAt(blockposition.getX(), blockposition.getY(), blockposition.getZ()), CraftBlockData.fromData(newBlock));
+                        world.getServer().getPluginManager().callEvent(event);
+                        if (event.isCancelled()) {
+                            return;
+                        }
+                    }
+                }
 
-                newBlock.a(world, blockposition, j);
-                newBlock.b(world, blockposition, j);
+                // Seems to update connections, eg fences
+                newBlock.a(world, blockposition, 2);
+                // Re-notifies observers as new block
+                newBlock.b(world, blockposition, 2);
             }
 
-            world.a(blockposition, oldBlock, actualBlock);
+            // This appears to just be some villager stuff / debug code
+            // world.a(blockposition, oldBlock, actualBlock);
         }
     }
 
@@ -409,7 +446,7 @@ public final class Spigot_v1_15_R2 implements BukkitImplAdapter {
             if (sideEffectApplier.shouldApply(SideEffect.LIGHTING)) {
                 craftWorld.getHandle().getChunkProvider().getLightEngine().a(blockPos); // server should do lighting for us
             }
-            updateNeighbours(craftWorld.getHandle(), blockPos, chunk, old, newState, newState, 1 | 2);
+            updateNeighbours(craftWorld.getHandle(), blockPos, chunk, old, newState, newState, sideEffectApplier);
         }
 
         return successful;
@@ -459,7 +496,7 @@ public final class Spigot_v1_15_R2 implements BukkitImplAdapter {
         if (sideEffectApplier.shouldApply(SideEffect.LIGHTING)) {
             craftWorld.getHandle().getChunkProvider().getLightEngine().a(blockPosition); // server should do lighting for us
         }
-        updateNeighbours(craftWorld.getHandle(), blockPosition, null, oldData, newData, newData, 1 | 2); // Update
+        updateNeighbours(craftWorld.getHandle(), blockPosition, null, oldData, newData, newData, sideEffectApplier); // Update
     }
 
     @Override
