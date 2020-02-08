@@ -49,7 +49,6 @@ import com.sk89q.worldedit.bukkit.BukkitWorld;
 import com.sk89q.worldedit.bukkit.adapter.BukkitImplAdapter;
 import com.sk89q.worldedit.entity.BaseEntity;
 import com.sk89q.worldedit.extension.platform.Watchdog;
-import com.sk89q.worldedit.extent.world.WorldApplyingExtent;
 import com.sk89q.worldedit.internal.Constants;
 import com.sk89q.worldedit.internal.block.BlockStateIdAccess;
 import com.sk89q.worldedit.math.BlockVector2;
@@ -62,6 +61,8 @@ import com.sk89q.worldedit.registry.state.EnumProperty;
 import com.sk89q.worldedit.registry.state.IntegerProperty;
 import com.sk89q.worldedit.registry.state.Property;
 import com.sk89q.worldedit.util.Direction;
+import com.sk89q.worldedit.util.SideEffect;
+import com.sk89q.worldedit.util.SideEffectApplier;
 import com.sk89q.worldedit.world.DataFixer;
 import com.sk89q.worldedit.world.block.BaseBlock;
 import com.sk89q.worldedit.world.block.BlockState;
@@ -326,7 +327,7 @@ public final class Spigot_v1_14_R4 implements BukkitImplAdapter {
     }
 
     @Override
-    public boolean setBlock(Location location, BlockStateHolder<?> state, Set<WorldApplyingExtent.BlockUpdateOptions> blockUpdateOptionsSet) {
+    public boolean setBlock(Location location, BlockStateHolder<?> state, SideEffectApplier sideEffectApplier) {
         checkNotNull(location);
         checkNotNull(state);
 
@@ -373,7 +374,7 @@ public final class Spigot_v1_14_R4 implements BukkitImplAdapter {
         }
 
         if (successful) {
-            if (blockUpdateOptionsSet.contains(WorldApplyingExtent.BlockUpdateOptions.LIGHTING)) {
+            if (sideEffectApplier.shouldApply(SideEffect.LIGHTING)) {
                 craftWorld.getHandle().getChunkProvider().getLightEngine().a(blockPos); // server should do lighting for us
             }
             craftWorld.getHandle().notifyAndUpdatePhysics(blockPos, chunk, old, newState, newState, 1 | 2);
@@ -416,14 +417,14 @@ public final class Spigot_v1_14_R4 implements BukkitImplAdapter {
     }
 
     @Override
-    public void notifyAndLightBlock(Location position, BlockState previousType, Set<WorldApplyingExtent.BlockUpdateOptions> blockUpdateOptionsSet) {
+    public void notifyAndLightBlock(Location position, BlockState previousType, SideEffectApplier sideEffectApplier) {
         CraftWorld craftWorld = ((CraftWorld) position.getWorld());
 
         BlockPosition blockPosition = new BlockPosition(position.getBlockX(), position.getBlockY(), position.getBlockZ());
         IBlockData oldData = ((CraftBlockData) BukkitAdapter.adapt(previousType)).getState();
         IBlockData newData = craftWorld.getHandle().getType(blockPosition);
 
-        if (blockUpdateOptionsSet.contains(WorldApplyingExtent.BlockUpdateOptions.LIGHTING)) {
+        if (sideEffectApplier.shouldApply(SideEffect.LIGHTING)) {
             craftWorld.getHandle().getChunkProvider().getLightEngine().a(blockPosition); // server should do lighting for us
         }
         craftWorld.getHandle().notifyAndUpdatePhysics(blockPosition, null, oldData, newData, newData, 1 | 2); // Update
