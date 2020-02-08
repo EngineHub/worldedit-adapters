@@ -40,6 +40,7 @@ import com.sk89q.worldedit.blocks.BaseItemStack;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.bukkit.adapter.BukkitImplAdapter;
 import com.sk89q.worldedit.entity.BaseEntity;
+import com.sk89q.worldedit.extent.world.WorldApplyingExtent;
 import com.sk89q.worldedit.internal.Constants;
 import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.registry.state.BooleanProperty;
@@ -244,7 +245,7 @@ public final class Spigot_v1_14_R2 implements BukkitImplAdapter {
     }
 
     @Override
-    public boolean setBlock(Location location, BlockStateHolder state, boolean notifyAndLight) {
+    public boolean setBlock(Location location, BlockStateHolder<?> state, Set<WorldApplyingExtent.BlockUpdateOptions> blockUpdateOptionsSet) {
         checkNotNull(location);
         checkNotNull(state);
 
@@ -283,8 +284,10 @@ public final class Spigot_v1_14_R2 implements BukkitImplAdapter {
             }
         }
 
-        if (successful && notifyAndLight) {
-            craftWorld.getHandle().getChunkProvider().getLightEngine().a(pos); // server should do lighting for us
+        if (successful) {
+            if (blockUpdateOptionsSet.contains(WorldApplyingExtent.BlockUpdateOptions.LIGHTING)) {
+                craftWorld.getHandle().getChunkProvider().getLightEngine().a(pos); // server should do lighting for us
+            }
             craftWorld.getHandle().notifyAndUpdatePhysics(pos, chunk, old, newState, newState, 1 | 2);
         }
 
@@ -325,14 +328,16 @@ public final class Spigot_v1_14_R2 implements BukkitImplAdapter {
     }
 
     @Override
-    public void notifyAndLightBlock(Location position, BlockState previousType) {
+    public void notifyAndLightBlock(Location position, BlockState previousType, Set<WorldApplyingExtent.BlockUpdateOptions> blockUpdateOptionsSet) {
         CraftWorld craftWorld = ((CraftWorld) position.getWorld());
 
         BlockPosition blockPosition = new BlockPosition(position.getBlockX(), position.getBlockY(), position.getBlockZ());
         IBlockData oldData = ((CraftBlockData) BukkitAdapter.adapt(previousType)).getState();
         IBlockData newData = craftWorld.getHandle().getType(blockPosition);
 
-        //        craftWorld.getHandle().r(blockPosition); // Re-light
+        if (blockUpdateOptionsSet.contains(WorldApplyingExtent.BlockUpdateOptions.LIGHTING)) {
+            craftWorld.getHandle().getChunkProvider().getLightEngine().a(blockPosition); // server should do lighting for us
+        }
         craftWorld.getHandle().notifyAndUpdatePhysics(blockPosition, null, oldData, newData, newData, 1 | 2); // Update
     }
 
