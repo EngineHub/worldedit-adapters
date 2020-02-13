@@ -283,7 +283,7 @@ public final class Spigot_v1_13_R1 implements BukkitImplAdapter {
             if (sideEffectApplier.shouldApply(SideEffect.LIGHTING)) {
                 craftWorld.getHandle().r(pos); // server should do lighting for us
             }
-            if (!sideEffectApplier.isNone()) {
+            if (sideEffectApplier.doesApplyAny()) {
                 craftWorld.getHandle().notifyAndUpdatePhysics(pos, chunk, old, newState, newState, 1 | 2);
             }
         }

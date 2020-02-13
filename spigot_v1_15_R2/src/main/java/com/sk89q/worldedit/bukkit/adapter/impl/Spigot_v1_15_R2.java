@@ -352,7 +352,7 @@ public final class Spigot_v1_15_R2 implements BukkitImplAdapter {
                 }
             }
 
-            if (!world.isClientSide && sideEffectApplier.shouldApply(SideEffect.NEIGHBOURS)) {
+            if (!world.isClientSide && sideEffectApplier.shouldApply(SideEffect.NEIGHBORS)) {
                 if (sideEffectApplier.shouldApply(SideEffect.PLUGIN_EVENTS)) {
                     world.update(blockposition, oldBlock.getBlock());
                 } else {
