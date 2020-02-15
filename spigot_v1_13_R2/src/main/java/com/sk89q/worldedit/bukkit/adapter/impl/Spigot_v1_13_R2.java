@@ -20,6 +20,7 @@
 package com.sk89q.worldedit.bukkit.adapter.impl;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.sk89q.jnbt.ByteArrayTag;
 import com.sk89q.jnbt.ByteTag;
@@ -107,6 +108,8 @@ import javax.annotation.Nullable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -447,6 +450,16 @@ public final class Spigot_v1_13_R2 implements BukkitImplAdapter {
         final BaseItemStack weStack = new BaseItemStack(BukkitAdapter.asItemType(itemStack.getType()), itemStack.getAmount());
         weStack.setNbtData(((CompoundTag) toNative(nmsStack.getTag())));
         return weStack;
+    }
+
+    private static final Collection<SideEffect> SUPPORTED_SIDE_EFFECTS = ImmutableSet.copyOf(EnumSet.of(
+            SideEffect.NEIGHBORS,
+            SideEffect.LIGHTING
+    ));
+
+    @Override
+    public Collection<SideEffect> getSupportedSideEffects() {
+        return SUPPORTED_SIDE_EFFECTS;
     }
 
     // ------------------------------------------------------------------------

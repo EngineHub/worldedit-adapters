@@ -23,6 +23,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import com.sk89q.jnbt.ByteArrayTag;
@@ -144,6 +145,8 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -691,6 +694,19 @@ public final class Spigot_v1_15_R2 implements BukkitImplAdapter {
             saveFolder.delete();
         }
         return true;
+    }
+
+    private static final Collection<SideEffect> SUPPORTED_SIDE_EFFECTS = ImmutableSet.copyOf(EnumSet.of(
+            SideEffect.NEIGHBORS,
+            SideEffect.LIGHTING,
+            SideEffect.CONNECTIONS,
+            SideEffect.ENTITY_AI,
+            SideEffect.PLUGIN_EVENTS
+    ));
+
+    @Override
+    public Collection<SideEffect> getSupportedSideEffects() {
+        return SUPPORTED_SIDE_EFFECTS;
     }
 
     // ------------------------------------------------------------------------
