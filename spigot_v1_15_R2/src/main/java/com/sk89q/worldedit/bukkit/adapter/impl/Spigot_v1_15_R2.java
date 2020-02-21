@@ -337,7 +337,7 @@ public final class Spigot_v1_15_R2 implements BukkitImplAdapter {
      *
      * @see World#notifyAndUpdatePhysics
      */
-    private void updateNeighbours(World world, BlockPosition blockposition, Chunk chunk, IBlockData oldBlock, IBlockData newBlock,
+    private void updateNeighbours(WorldServer world, BlockPosition blockposition, Chunk chunk, IBlockData oldBlock, IBlockData newBlock,
             IBlockData actualBlock, SideEffectApplier sideEffectApplier) {
         if (actualBlock == newBlock) {
             if (oldBlock != actualBlock) {
@@ -351,7 +351,7 @@ public final class Spigot_v1_15_R2 implements BukkitImplAdapter {
                     world.notify(blockposition, oldBlock, newBlock, 1 | 2);
                 } else {
                     // If we want to skip entity AI, just call the chunk dirty flag.
-                    ((ChunkProviderServer) world.getChunkProvider()).flagDirty(blockposition);
+                    world.getChunkProvider().flagDirty(blockposition);
                 }
             }
 
@@ -404,12 +404,13 @@ public final class Spigot_v1_15_R2 implements BukkitImplAdapter {
         checkNotNull(state);
 
         CraftWorld craftWorld = ((CraftWorld) location.getWorld());
+        WorldServer world = craftWorld.getHandle();
         int x = location.getBlockX();
         int y = location.getBlockY();
         int z = location.getBlockZ();
 
         // First set the block
-        Chunk chunk = craftWorld.getHandle().getChunkAt(x >> 4, z >> 4);
+        Chunk chunk = world.getChunkAt(x >> 4, z >> 4);
         BlockPosition blockPos = new BlockPosition(x, y, z);
         IBlockData old = chunk.getType(blockPos);
         IBlockData newState;
@@ -422,7 +423,7 @@ public final class Spigot_v1_15_R2 implements BukkitImplAdapter {
             Map<Property<?>, Object> states = state.getStates();
             newState = applyProperties(mcBlock.getStates(), newState, states);
         }
-        IBlockData successState = chunk.setType(blockPos, newState, false);
+        IBlockData successState = chunk.setType(blockPos, newState, false, sideEffectApplier.shouldApply(SideEffect.NEIGHBORS));
         boolean successful = successState != null;
 
         // Create the TileEntity
@@ -432,7 +433,7 @@ public final class Spigot_v1_15_R2 implements BukkitImplAdapter {
                 if (nativeTag != null) {
                     // We will assume that the tile entity was created for us,
                     // though we do not do this on the Forge version
-                    TileEntity tileEntity = craftWorld.getHandle().getTileEntity(blockPos);
+                    TileEntity tileEntity = world.getTileEntity(blockPos);
                     if (tileEntity != null) {
                         NBTTagCompound tag = (NBTTagCompound) fromNative(nativeTag);
                         tag.set("x", NBTTagInt.a(x));
@@ -447,9 +448,9 @@ public final class Spigot_v1_15_R2 implements BukkitImplAdapter {
 
         if (successful) {
             if (sideEffectApplier.shouldApply(SideEffect.LIGHTING)) {
-                craftWorld.getHandle().getChunkProvider().getLightEngine().a(blockPos); // server should do lighting for us
+                world.getChunkProvider().getLightEngine().a(blockPos); // server should do lighting for us
             }
-            updateNeighbours(craftWorld.getHandle(), blockPos, chunk, old, newState, newState, sideEffectApplier);
+            updateNeighbours(world, blockPos, chunk, old, newState, newState, sideEffectApplier);
         }
 
         return successful;
