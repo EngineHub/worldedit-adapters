@@ -23,8 +23,8 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.common.io.Files;
 import com.sk89q.jnbt.ByteArrayTag;
 import com.sk89q.jnbt.ByteTag;
@@ -63,7 +63,7 @@ import com.sk89q.worldedit.registry.state.IntegerProperty;
 import com.sk89q.worldedit.registry.state.Property;
 import com.sk89q.worldedit.util.Direction;
 import com.sk89q.worldedit.util.SideEffect;
-import com.sk89q.worldedit.util.SideEffectApplier;
+import com.sk89q.worldedit.util.SideEffectSet;
 import com.sk89q.worldedit.world.DataFixer;
 import com.sk89q.worldedit.world.block.BaseBlock;
 import com.sk89q.worldedit.world.block.BlockState;
@@ -144,8 +144,6 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -337,7 +335,7 @@ public final class Spigot_v1_15_R1 implements BukkitImplAdapter {
      * @see World#notifyAndUpdatePhysics
      */
     private void updateNeighbours(WorldServer world, BlockPosition blockposition, Chunk chunk, IBlockData oldBlock, IBlockData newBlock,
-            IBlockData actualBlock, SideEffectApplier sideEffectApplier) {
+            IBlockData actualBlock, SideEffectSet sideEffectSet) {
         if (actualBlock == newBlock) {
             if (oldBlock != actualBlock) {
                 // This seems to do nothing?
@@ -346,7 +344,7 @@ public final class Spigot_v1_15_R1 implements BukkitImplAdapter {
 
             // Remove redundant branches
             if (world.isClientSide || chunk == null || chunk.getState() != null && chunk.getState().isAtLeast(PlayerChunk.State.TICKING)) {
-                if (sideEffectApplier.shouldApply(SideEffect.ENTITY_AI)) {
+                if (sideEffectSet.shouldApply(SideEffect.ENTITY_AI)) {
                     world.notify(blockposition, oldBlock, newBlock, 1 | 2);
                 } else {
                     // If we want to skip entity AI, just call the chunk dirty flag.
@@ -354,8 +352,8 @@ public final class Spigot_v1_15_R1 implements BukkitImplAdapter {
                 }
             }
 
-            if (!world.isClientSide && sideEffectApplier.shouldApply(SideEffect.NEIGHBORS)) {
-                if (sideEffectApplier.shouldApply(SideEffect.PLUGIN_EVENTS)) {
+            if (!world.isClientSide && sideEffectSet.shouldApply(SideEffect.NEIGHBORS)) {
+                if (sideEffectSet.shouldApply(SideEffect.PLUGIN_EVENTS)) {
                     world.update(blockposition, oldBlock.getBlock());
                 } else {
                     // When we don't want events, manually run the physics without them.
@@ -372,10 +370,10 @@ public final class Spigot_v1_15_R1 implements BukkitImplAdapter {
             }
 
             // Make connection updates optional
-            if (sideEffectApplier.shouldApply(SideEffect.CONNECTIONS)) {
+            if (sideEffectSet.shouldApply(SideEffect.CONNECTIONS)) {
                 // Seems to notify observers
                 oldBlock.b(world, blockposition, 2);
-                if (sideEffectApplier.shouldApply(SideEffect.PLUGIN_EVENTS)) {
+                if (sideEffectSet.shouldApply(SideEffect.PLUGIN_EVENTS)) {
                     CraftWorld craftWorld = world.getWorld();
                     if (craftWorld != null) {
                         BlockPhysicsEvent
@@ -399,7 +397,7 @@ public final class Spigot_v1_15_R1 implements BukkitImplAdapter {
     }
 
     @Override
-    public boolean setBlock(Location location, BlockStateHolder<?> state, SideEffectApplier sideEffectApplier) {
+    public boolean setBlock(Location location, BlockStateHolder<?> state, SideEffectSet sideEffectSet) {
         checkNotNull(location);
         checkNotNull(state);
 
@@ -423,7 +421,7 @@ public final class Spigot_v1_15_R1 implements BukkitImplAdapter {
             Map<Property<?>, Object> states = state.getStates();
             newState = applyProperties(mcBlock.getStates(), newState, states);
         }
-        IBlockData successState = chunk.setType(blockPos, newState, false, sideEffectApplier.shouldApply(SideEffect.NEIGHBORS));
+        IBlockData successState = chunk.setType(blockPos, newState, false, sideEffectSet.shouldApply(SideEffect.NEIGHBORS));
         boolean successful = successState != null;
 
         // Create the TileEntity
@@ -447,10 +445,10 @@ public final class Spigot_v1_15_R1 implements BukkitImplAdapter {
         }
 
         if (successful) {
-            if (sideEffectApplier.shouldApply(SideEffect.LIGHTING)) {
+            if (sideEffectSet.shouldApply(SideEffect.LIGHTING)) {
                 world.getChunkProvider().getLightEngine().a(blockPos); // server should do lighting for us
             }
-            updateNeighbours(world, blockPos, chunk, old, newState, newState, sideEffectApplier);
+            updateNeighbours(world, blockPos, chunk, old, newState, newState, sideEffectSet);
         }
 
         return successful;
@@ -490,17 +488,17 @@ public final class Spigot_v1_15_R1 implements BukkitImplAdapter {
     }
 
     @Override
-    public void notifyAndLightBlock(Location position, BlockState previousType, SideEffectApplier sideEffectApplier) {
+    public void applySideEffects(Location position, BlockState previousType, SideEffectSet sideEffectSet) {
         CraftWorld craftWorld = ((CraftWorld) position.getWorld());
 
         BlockPosition blockPosition = new BlockPosition(position.getBlockX(), position.getBlockY(), position.getBlockZ());
         IBlockData oldData = ((CraftBlockData) BukkitAdapter.adapt(previousType)).getState();
         IBlockData newData = craftWorld.getHandle().getType(blockPosition);
 
-        if (sideEffectApplier.shouldApply(SideEffect.LIGHTING)) {
+        if (sideEffectSet.shouldApply(SideEffect.LIGHTING)) {
             craftWorld.getHandle().getChunkProvider().getLightEngine().a(blockPosition); // server should do lighting for us
         }
-        updateNeighbours(craftWorld.getHandle(), blockPosition, null, oldData, newData, newData, sideEffectApplier); // Update
+        updateNeighbours(craftWorld.getHandle(), blockPosition, null, oldData, newData, newData, sideEffectSet); // Update
     }
 
     @Override
@@ -697,16 +695,16 @@ public final class Spigot_v1_15_R1 implements BukkitImplAdapter {
         return true;
     }
 
-    private static final Collection<SideEffect> SUPPORTED_SIDE_EFFECTS = ImmutableSet.copyOf(EnumSet.of(
+    private static final Set<SideEffect> SUPPORTED_SIDE_EFFECTS = Sets.immutableEnumSet(
             SideEffect.NEIGHBORS,
             SideEffect.LIGHTING,
             SideEffect.CONNECTIONS,
             SideEffect.ENTITY_AI,
             SideEffect.PLUGIN_EVENTS
-    ));
+    );
 
     @Override
-    public Collection<SideEffect> getSupportedSideEffects() {
+    public Set<SideEffect> getSupportedSideEffects() {
         return SUPPORTED_SIDE_EFFECTS;
     }
 
