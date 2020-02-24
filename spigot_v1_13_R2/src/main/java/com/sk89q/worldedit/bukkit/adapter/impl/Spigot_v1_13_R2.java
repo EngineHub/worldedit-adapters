@@ -284,7 +284,7 @@ public final class Spigot_v1_13_R2 implements BukkitImplAdapter {
         }
 
         if (successful) {
-            if (sideEffectSet.shouldApply(SideEffect.LIGHTING)) {
+            if (sideEffectSet.getState(SideEffect.LIGHTING) == SideEffect.State.ON) {
                 craftWorld.getHandle().r(pos); // server should do lighting for us
             }
             craftWorld.getHandle().notifyAndUpdatePhysics(pos, chunk, old, newState, newState, 1 | 2);
@@ -334,7 +334,7 @@ public final class Spigot_v1_13_R2 implements BukkitImplAdapter {
         IBlockData oldData = ((CraftBlockData) BukkitAdapter.adapt(previousType)).getState();
         IBlockData newData = craftWorld.getHandle().i(blockPosition);
 
-        if (sideEffectSet.shouldApply(SideEffect.LIGHTING)) {
+        if (sideEffectSet.getState(SideEffect.LIGHTING) == SideEffect.State.ON) {
             craftWorld.getHandle().r(blockPosition); // Re-light
         }
         craftWorld.getHandle().notifyAndUpdatePhysics(blockPosition, null, oldData, newData, newData, 1 | 2); // Update
