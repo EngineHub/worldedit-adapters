@@ -21,6 +21,7 @@ package com.sk89q.worldedit.bukkit.adapter.impl;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.common.io.Files;
 import com.sk89q.jnbt.ByteArrayTag;
 import com.sk89q.jnbt.ByteTag;
@@ -57,6 +58,8 @@ import com.sk89q.worldedit.registry.state.EnumProperty;
 import com.sk89q.worldedit.registry.state.IntegerProperty;
 import com.sk89q.worldedit.registry.state.Property;
 import com.sk89q.worldedit.util.Direction;
+import com.sk89q.worldedit.util.SideEffect;
+import com.sk89q.worldedit.util.SideEffectSet;
 import com.sk89q.worldedit.world.DataFixer;
 import com.sk89q.worldedit.world.block.BaseBlock;
 import com.sk89q.worldedit.world.block.BlockState;
@@ -116,6 +119,7 @@ import org.bukkit.craftbukkit.v1_13_R2.entity.CraftPlayer;
 import org.bukkit.craftbukkit.v1_13_R2.inventory.CraftItemStack;
 import org.bukkit.craftbukkit.v1_13_R2.util.CraftMagicNumbers;
 import org.bukkit.entity.Player;
+import org.bukkit.event.block.BlockPhysicsEvent;
 import org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason;
 import org.bukkit.generator.ChunkGenerator;
 import org.spigotmc.SpigotConfig;
@@ -308,20 +312,88 @@ public final class Spigot_v1_13_R2_2 implements BukkitImplAdapter {
         return state.toBaseBlock();
     }
 
+    private static final EnumDirection[] neighbourOrder = {
+            EnumDirection.WEST, EnumDirection.EAST,
+            EnumDirection.DOWN, EnumDirection.UP,
+            EnumDirection.NORTH, EnumDirection.SOUTH
+    };
+
+    /**
+     * This is a heavily modified function stripped from MC to apply worldedit-modifications.
+     *
+     * @see World#notifyAndUpdatePhysics
+     */
+    private void updateNeighbours(WorldServer world, BlockPosition blockposition, Chunk chunk, IBlockData oldBlock, IBlockData newBlock,
+            IBlockData actualBlock, SideEffectSet sideEffectSet) {
+        if (actualBlock == newBlock) {
+            if (oldBlock != actualBlock) {
+                // This seems to do nothing?
+                world.a(blockposition, blockposition);
+            }
+
+            if (!world.isClientSide || (chunk == null || chunk.isReady())) {
+                world.notify(blockposition, oldBlock, newBlock, 1 | 2);
+            }
+
+            if (!world.isClientSide && sideEffectSet.shouldApply(SideEffect.NEIGHBORS)) {
+                if (sideEffectSet.shouldApply(SideEffect.PLUGIN_EVENTS)) {
+                    world.update(blockposition, oldBlock.getBlock());
+                } else {
+                    // When we don't want events, manually run the physics without them.
+                    // Un-nest neighbour updating
+                    for (EnumDirection direction : neighbourOrder) {
+                        BlockPosition shifted = blockposition.shift(direction);
+                        world.getType(shifted).doPhysics(world, shifted, oldBlock.getBlock(), blockposition);
+                    }
+                }
+
+                if (newBlock.isComplexRedstone()) {
+                    world.updateAdjacentComparators(blockposition, newBlock.getBlock());
+                }
+            }
+
+            // Make connection updates optional
+            if (sideEffectSet.shouldApply(SideEffect.CONNECTIONS)) {
+                // Seems to notify observers
+                oldBlock.b(world, blockposition, 2);
+                if (sideEffectSet.shouldApply(SideEffect.PLUGIN_EVENTS)) {
+                    CraftWorld craftWorld = world.getWorld();
+                    if (craftWorld != null) {
+                        BlockPhysicsEvent
+                                event = new BlockPhysicsEvent(craftWorld.getBlockAt(blockposition.getX(), blockposition.getY(), blockposition.getZ()), CraftBlockData.fromData(newBlock));
+                        world.getServer().getPluginManager().callEvent(event);
+                        if (event.isCancelled()) {
+                            return;
+                        }
+                    }
+                }
+
+                // Seems to update connections, eg fences
+                newBlock.a(world, blockposition, 2);
+                // Re-notifies observers as new block
+                newBlock.b(world, blockposition, 2);
+            }
+
+            // This appears to just be some villager stuff / debug code
+            // world.a(blockposition, oldBlock, actualBlock);
+        }
+    }
+
     @Override
-    public boolean setBlock(Location location, BlockStateHolder state, boolean notifyAndLight) {
+    public boolean setBlock(Location location, BlockStateHolder<?> state, SideEffectSet sideEffectSet) {
         checkNotNull(location);
         checkNotNull(state);
 
         CraftWorld craftWorld = ((CraftWorld) location.getWorld());
+        WorldServer world = craftWorld.getHandle();
         int x = location.getBlockX();
         int y = location.getBlockY();
         int z = location.getBlockZ();
 
         // First set the block
-        Chunk chunk = craftWorld.getHandle().getChunkAt(x >> 4, z >> 4);
-        BlockPosition pos = new BlockPosition(x, y, z);
-        IBlockData old = chunk.getBlockData(x, y, z);
+        Chunk chunk = world.getChunkAt(x >> 4, z >> 4);
+        BlockPosition blockPos = new BlockPosition(x, y, z);
+        IBlockData old = chunk.getType(blockPos);
         IBlockData newState;
         final int blockStateId = BlockStateIdAccess.getBlockStateId(state.toImmutableState());
         if (BlockStateIdAccess.isValidInternalId(blockStateId)) {
@@ -332,7 +404,7 @@ public final class Spigot_v1_13_R2_2 implements BukkitImplAdapter {
             Map<Property<?>, Object> states = state.getStates();
             newState = applyProperties(mcBlock.getStates(), newState, states);
         }
-        IBlockData successState = chunk.setType(pos, newState, false);
+        IBlockData successState = chunk.setType(blockPos, newState, false, sideEffectSet.shouldApply(SideEffect.NEIGHBORS));
         boolean successful = successState != null;
 
         // Create the TileEntity
@@ -342,7 +414,7 @@ public final class Spigot_v1_13_R2_2 implements BukkitImplAdapter {
                 if (nativeTag != null) {
                     // We will assume that the tile entity was created for us,
                     // though we do not do this on the Forge version
-                    TileEntity tileEntity = craftWorld.getHandle().getTileEntity(pos);
+                    TileEntity tileEntity = world.getTileEntity(blockPos);
                     if (tileEntity != null) {
                         NBTTagCompound tag = (NBTTagCompound) fromNative(nativeTag);
                         tag.set("x", new NBTTagInt(x));
@@ -355,9 +427,11 @@ public final class Spigot_v1_13_R2_2 implements BukkitImplAdapter {
             }
         }
 
-        if (successful && notifyAndLight) {
-            craftWorld.getHandle().r(pos); // server should do lighting for us
-            craftWorld.getHandle().notifyAndUpdatePhysics(pos, chunk, old, newState, newState, 1 | 2);
+        if (successful) {
+            if (sideEffectSet.getState(SideEffect.LIGHTING) == SideEffect.State.ON) {
+                world.r(blockPos); // server should do lighting for us
+            }
+            updateNeighbours(world, blockPos, chunk, old, newState, newState, sideEffectSet);
         }
 
         return successful;
@@ -397,15 +471,17 @@ public final class Spigot_v1_13_R2_2 implements BukkitImplAdapter {
     }
 
     @Override
-    public void notifyAndLightBlock(Location position, BlockState previousType) {
+    public void applySideEffects(Location position, BlockState previousType, SideEffectSet sideEffectSet) {
         CraftWorld craftWorld = ((CraftWorld) position.getWorld());
 
         BlockPosition blockPosition = new BlockPosition(position.getBlockX(), position.getBlockY(), position.getBlockZ());
         IBlockData oldData = ((CraftBlockData) BukkitAdapter.adapt(previousType)).getState();
         IBlockData newData = craftWorld.getHandle().getType(blockPosition);
 
-        //        craftWorld.getHandle().r(blockPosition); // Re-light
-        craftWorld.getHandle().notifyAndUpdatePhysics(blockPosition, null, oldData, newData, newData, 1 | 2); // Update
+        if (sideEffectSet.getState(SideEffect.LIGHTING) == SideEffect.State.ON) {
+            craftWorld.getHandle().r(blockPosition); // Re-light
+        }
+        updateNeighbours(craftWorld.getHandle(), blockPosition, null, oldData, newData, newData, sideEffectSet); // Update
     }
 
     @Override
@@ -564,6 +640,18 @@ public final class Spigot_v1_13_R2_2 implements BukkitImplAdapter {
             saveFolder.delete();
         }
         return true;
+    }
+
+    private static final Set<SideEffect> SUPPORTED_SIDE_EFFECTS = Sets.immutableEnumSet(
+            SideEffect.NEIGHBORS,
+            SideEffect.LIGHTING,
+            SideEffect.CONNECTIONS,
+            SideEffect.PLUGIN_EVENTS
+    );
+
+    @Override
+    public Set<SideEffect> getSupportedSideEffects() {
+        return SUPPORTED_SIDE_EFFECTS;
     }
 
     // ------------------------------------------------------------------------

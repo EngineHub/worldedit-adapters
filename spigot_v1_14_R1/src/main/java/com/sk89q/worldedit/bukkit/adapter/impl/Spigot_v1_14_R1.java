@@ -21,6 +21,7 @@ package com.sk89q.worldedit.bukkit.adapter.impl;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.sk89q.jnbt.ByteArrayTag;
 import com.sk89q.jnbt.ByteTag;
 import com.sk89q.jnbt.CompoundTag;
@@ -48,6 +49,8 @@ import com.sk89q.worldedit.registry.state.EnumProperty;
 import com.sk89q.worldedit.registry.state.IntegerProperty;
 import com.sk89q.worldedit.registry.state.Property;
 import com.sk89q.worldedit.util.Direction;
+import com.sk89q.worldedit.util.SideEffect;
+import com.sk89q.worldedit.util.SideEffectSet;
 import com.sk89q.worldedit.world.DataFixer;
 import com.sk89q.worldedit.world.block.BaseBlock;
 import com.sk89q.worldedit.world.block.BlockState;
@@ -227,7 +230,7 @@ public final class Spigot_v1_14_R1 implements BukkitImplAdapter {
     }
 
     @Override
-    public boolean setBlock(Location location, BlockStateHolder state, boolean notifyAndLight) {
+    public boolean setBlock(Location location, BlockStateHolder<?> state, SideEffectSet sideEffectSet) {
         checkNotNull(location);
         checkNotNull(state);
 
@@ -266,8 +269,10 @@ public final class Spigot_v1_14_R1 implements BukkitImplAdapter {
             }
         }
 
-        if (successful && notifyAndLight) {
-            craftWorld.getHandle().getChunkProvider().getLightEngine().a(pos); // server should do lighting for us
+        if (successful) {
+            if (sideEffectSet.getState(SideEffect.LIGHTING) == SideEffect.State.ON) {
+                craftWorld.getHandle().getChunkProvider().getLightEngine().a(pos); // server should do lighting for us
+            }
             craftWorld.getHandle().notifyAndUpdatePhysics(pos, chunk, old, newState, newState, 1 | 2);
         }
 
@@ -308,14 +313,16 @@ public final class Spigot_v1_14_R1 implements BukkitImplAdapter {
     }
 
     @Override
-    public void notifyAndLightBlock(Location position, BlockState previousType) {
+    public void applySideEffects(Location position, BlockState previousType, SideEffectSet sideEffectSet) {
         CraftWorld craftWorld = ((CraftWorld) position.getWorld());
 
         BlockPosition blockPosition = new BlockPosition(position.getBlockX(), position.getBlockY(), position.getBlockZ());
         IBlockData oldData = ((CraftBlockData) BukkitAdapter.adapt(previousType)).getState();
         IBlockData newData = craftWorld.getHandle().i(blockPosition);
 
-        //        craftWorld.getHandle().r(blockPosition); // Re-light
+        if (sideEffectSet.getState(SideEffect.LIGHTING) == SideEffect.State.ON) {
+            craftWorld.getHandle().getChunkProvider().getLightEngine().a(blockPosition); // server should do lighting for us
+        }
         craftWorld.getHandle().notifyAndUpdatePhysics(blockPosition, null, oldData, newData, newData, 1 | 2); // Update
     }
 
@@ -421,6 +428,16 @@ public final class Spigot_v1_14_R1 implements BukkitImplAdapter {
         final BaseItemStack weStack = new BaseItemStack(BukkitAdapter.asItemType(itemStack.getType()), itemStack.getAmount());
         weStack.setNbtData(((CompoundTag) toNative(nmsStack.getTag())));
         return weStack;
+    }
+
+    private static final Set<SideEffect> SUPPORTED_SIDE_EFFECTS = Sets.immutableEnumSet(
+            SideEffect.NEIGHBORS,
+            SideEffect.LIGHTING
+    );
+
+    @Override
+    public Set<SideEffect> getSupportedSideEffects() {
+        return SUPPORTED_SIDE_EFFECTS;
     }
 
     // ------------------------------------------------------------------------
