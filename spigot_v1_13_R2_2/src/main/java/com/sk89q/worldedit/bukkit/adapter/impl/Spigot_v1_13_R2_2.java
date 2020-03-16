@@ -147,6 +147,7 @@ public final class Spigot_v1_13_R2_2 implements BukkitImplAdapter {
     private final Logger logger = Logger.getLogger(getClass().getCanonicalName());
 
     private final Field nbtListTagListField;
+    private final Field serverWorldsField;
     private final Method nbtCreateTagMethod;
     private final Watchdog watchdog;
 
@@ -161,6 +162,9 @@ public final class Spigot_v1_13_R2_2 implements BukkitImplAdapter {
         // The list of tags on an NBTTagList
         nbtListTagListField = NBTTagList.class.getDeclaredField("list");
         nbtListTagListField.setAccessible(true);
+
+        serverWorldsField = CraftServer.class.getDeclaredField("worlds");
+        serverWorldsField.setAccessible(true);
 
         // The method to create an NBTBase tag given its type ID
         nbtCreateTagMethod = NBTBase.class.getDeclaredMethod("createTag", byte.class);
@@ -626,18 +630,21 @@ public final class Spigot_v1_13_R2_2 implements BukkitImplAdapter {
                     freshWorld.getChunkAt(chunk.getBlockX(), chunk.getBlockZ());
                 }
 
-                CraftWorld craftWorld = new CraftWorld(freshWorld, gen, env);
-                synchronized (craftWorld) {
-                    BukkitWorld from = new BukkitWorld(craftWorld);
-                    for (BlockVector3 vec : region) {
-                        editSession.setBlock(vec, from.getFullBlock(vec));
-                    }
+                CraftWorld craftWorld = freshWorld.getWorld();
+                BukkitWorld from = new BukkitWorld(craftWorld);
+                for (BlockVector3 vec : region) {
+                    editSession.setBlock(vec, from.getFullBlock(vec));
                 }
             }
         } catch (MaxChangedBlocksException e) {
             throw new RuntimeException(e);
         } finally {
             saveFolder.delete();
+            try {
+                Map<String, org.bukkit.World> map = (Map<String, org.bukkit.World>) serverWorldsField.get(Bukkit.getServer());
+                map.remove("worldeditregentempworld");
+            } catch (IllegalAccessException ignored) {
+            }
         }
         return true;
     }
