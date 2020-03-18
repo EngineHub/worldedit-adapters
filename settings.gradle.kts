@@ -17,8 +17,16 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-rootProject.name = 'worldedit-adapters'
+rootProject.name = "worldedit-adapters"
 
-include 'spigot_v1_13_R1', 'spigot_v1_13_R2', 'spigot_v1_13_R2_2',
-        'spigot_v1_14_R1', 'spigot_v1_14_R2','spigot_v1_14_R3', 'spigot_v1_14_R4',
-        'spigot_v1_15_R1', 'spigot_v1_15_R2'
+data class Ver(val minor: Int, val rel: String)
+
+fun vers(minor: Int, vararg rels: String) = rels.map { Ver(minor, it) }
+
+listOf(
+    vers(13, "1", "2", "2_2"),
+    vers(14, "1", "2", "3", "4"),
+    vers(15, "1", "2")
+)
+    .flatten()
+    .forEach { include("spigot_v1_${it.minor}_R${it.rel}") }
