@@ -42,26 +42,13 @@ subprojects {
 
 }
 
-enum class BukkitType(val group: String, val artifact: String) {
-    CRAFT("org.bukkit", "craftbukkit"),
-    SPIGOT("org.spigotmc", "spigot")
-}
-
-data class BukkitDep(val type: BukkitType, val version: String)
-
 mapOf(
-    "spigot_v1_13_R1" to BukkitDep(BukkitType.CRAFT, "1.13"),
-    "spigot_v1_13_R2" to BukkitDep(BukkitType.CRAFT, "1.13.1"),
-    "spigot_v1_13_R2_2" to BukkitDep(BukkitType.SPIGOT, "1.13.2"),
-    "spigot_v1_14_R1" to BukkitDep(BukkitType.CRAFT, "1.14"),
-    "spigot_v1_14_R2" to BukkitDep(BukkitType.CRAFT, "1.14.1"),
-    "spigot_v1_14_R3" to BukkitDep(BukkitType.CRAFT, "1.14.2"),
-    "spigot_v1_14_R4" to BukkitDep(BukkitType.SPIGOT, "1.14.4"),
-    "spigot_v1_15_R1" to BukkitDep(BukkitType.SPIGOT, "1.15"),
-    "spigot_v1_15_R2" to BukkitDep(BukkitType.SPIGOT, "1.15.2")
-).forEach { (projectName, dep) ->
+    "spigot_v1_13_R2_2" to "1.13.2",
+    "spigot_v1_14_R4" to "1.14.4",
+    "spigot_v1_15_R2" to "1.15.2"
+).forEach { (projectName, ver) ->
     project(":$projectName") {
-        dependencies.implementation(dep.type.group, dep.type.artifact, "${dep.version}-R0.1-SNAPSHOT")
+        dependencies.implementation("org.spigotmc", "spigot", "${ver}-R0.1-SNAPSHOT")
     }
 }
 

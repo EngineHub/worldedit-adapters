@@ -21,12 +21,9 @@ rootProject.name = "worldedit-adapters"
 
 data class Ver(val minor: Int, val rel: String)
 
-fun vers(minor: Int, vararg rels: String) = rels.map { Ver(minor, it) }
-
 listOf(
-    vers(13, "1", "2", "2_2"),
-    vers(14, "1", "2", "3", "4"),
-    vers(15, "1", "2")
+    Ver(13, "2_2"),
+    Ver(14, "4"),
+    Ver(15, "2")
 )
-    .flatten()
     .forEach { include("spigot_v1_${it.minor}_R${it.rel}") }
