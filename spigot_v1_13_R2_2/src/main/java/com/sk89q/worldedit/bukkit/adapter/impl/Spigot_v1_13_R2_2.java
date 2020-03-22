@@ -60,11 +60,11 @@ import com.sk89q.worldedit.registry.state.IntegerProperty;
 import com.sk89q.worldedit.registry.state.Property;
 import com.sk89q.worldedit.util.Direction;
 import com.sk89q.worldedit.util.SideEffect;
-import com.sk89q.worldedit.util.SideEffectSet;
+import com.sk89q.worldedit.util.formatting.text.Component;
+import com.sk89q.worldedit.util.formatting.text.TranslatableComponent;
 import com.sk89q.worldedit.world.DataFixer;
 import com.sk89q.worldedit.world.block.BaseBlock;
 import com.sk89q.worldedit.world.block.BlockState;
-import com.sk89q.worldedit.world.block.BlockStateHolder;
 import com.sk89q.worldedit.world.block.BlockType;
 import net.minecraft.server.v1_13_R2.Block;
 import net.minecraft.server.v1_13_R2.BlockPosition;
@@ -120,7 +120,6 @@ import org.bukkit.craftbukkit.v1_13_R2.entity.CraftPlayer;
 import org.bukkit.craftbukkit.v1_13_R2.inventory.CraftItemStack;
 import org.bukkit.craftbukkit.v1_13_R2.util.CraftMagicNumbers;
 import org.bukkit.entity.Player;
-import org.bukkit.event.block.BlockPhysicsEvent;
 import org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason;
 import org.bukkit.generator.ChunkGenerator;
 import org.spigotmc.SpigotConfig;
@@ -271,6 +270,10 @@ public final class Spigot_v1_13_R2_2 implements BukkitImplAdapter {
         entity.save(tag);
     }
 
+    private static Block getBlockFromType(BlockType blockType) {
+        return IRegistry.BLOCK.get(MinecraftKey.a(blockType.getId()));
+    }
+
     @Override
     public OptionalInt getInternalBlockStateId(BlockData data) {
         IBlockData state = ((CraftBlockData) data).getState();
@@ -280,7 +283,7 @@ public final class Spigot_v1_13_R2_2 implements BukkitImplAdapter {
 
     @Override
     public OptionalInt getInternalBlockStateId(BlockState state) {
-        Block mcBlock = IRegistry.BLOCK.get(MinecraftKey.a(state.getBlockType().getId()));
+        Block mcBlock = getBlockFromType(state.getBlockType());
         IBlockData newState = mcBlock.getBlockData();
         Map<Property<?>, Object> states = state.getStates();
         newState = applyProperties(mcBlock.getStates(), newState, states);
@@ -405,11 +408,16 @@ public final class Spigot_v1_13_R2_2 implements BukkitImplAdapter {
         }
     }
 
+    @Override
+    public Component getRichBlockName(BlockType blockType) {
+        return TranslatableComponent.of(getBlockFromType(blockType).m());
+    }
+
     @SuppressWarnings("unchecked")
     @Override
     public Map<String, ? extends Property<?>> getProperties(BlockType blockType) {
         Map<String, Property<?>> properties = Maps.newTreeMap(String::compareTo);
-        Block block = IRegistry.BLOCK.get(MinecraftKey.a(blockType.getId()));
+        Block block = getBlockFromType(blockType);
         if (block == null) {
             logger.warning("Failed to find properties for " + blockType.getId());
             return properties;

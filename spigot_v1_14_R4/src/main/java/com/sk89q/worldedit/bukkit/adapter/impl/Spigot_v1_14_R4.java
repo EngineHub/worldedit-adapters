@@ -64,6 +64,8 @@ import com.sk89q.worldedit.registry.state.IntegerProperty;
 import com.sk89q.worldedit.registry.state.Property;
 import com.sk89q.worldedit.util.Direction;
 import com.sk89q.worldedit.util.SideEffect;
+import com.sk89q.worldedit.util.formatting.text.Component;
+import com.sk89q.worldedit.util.formatting.text.TranslatableComponent;
 import com.sk89q.worldedit.world.DataFixer;
 import com.sk89q.worldedit.world.block.BaseBlock;
 import com.sk89q.worldedit.world.block.BlockState;
@@ -283,6 +285,10 @@ public final class Spigot_v1_14_R4 implements BukkitImplAdapter {
         entity.save(tag);
     }
 
+    private static Block getBlockFromType(BlockType blockType) {
+        return IRegistry.BLOCK.get(MinecraftKey.a(blockType.getId()));
+    }
+
     @Override
     public OptionalInt getInternalBlockStateId(BlockData data) {
         IBlockData state = ((CraftBlockData) data).getState();
@@ -292,7 +298,7 @@ public final class Spigot_v1_14_R4 implements BukkitImplAdapter {
 
     @Override
     public OptionalInt getInternalBlockStateId(BlockState state) {
-        Block mcBlock = IRegistry.BLOCK.get(MinecraftKey.a(state.getBlockType().getId()));
+        Block mcBlock = getBlockFromType(state.getBlockType());
         IBlockData newState = mcBlock.getBlockData();
         Map<Property<?>, Object> states = state.getStates();
         newState = applyProperties(mcBlock.getStates(), newState, states);
@@ -418,11 +424,16 @@ public final class Spigot_v1_14_R4 implements BukkitImplAdapter {
         }
     }
 
+    @Override
+    public Component getRichBlockName(BlockType blockType) {
+        return TranslatableComponent.of(getBlockFromType(blockType).l());
+    }
+
     @SuppressWarnings("unchecked")
     @Override
     public Map<String, ? extends Property<?>> getProperties(BlockType blockType) {
         Map<String, Property<?>> properties = Maps.newTreeMap(String::compareTo);
-        Block block = IRegistry.BLOCK.get(MinecraftKey.a(blockType.getId()));
+        Block block = getBlockFromType(blockType);
         if (block == null) {
             logger.warning("Failed to find properties for " + blockType.getId());
             return properties;
