@@ -54,6 +54,6 @@ mapOf(
 
 tasks.jar {
     from(subprojects.map {
-        it.tasks.classes
+        it.sourceSets["main"].output
     })
 }
