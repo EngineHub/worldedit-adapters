@@ -121,7 +121,7 @@ public class WorldNativeAccess_v1_13_R2_2 implements WorldNativeAccess<Chunk, IB
     @Override
     public void notifyNeighbors(BlockPosition pos, IBlockData oldState, IBlockData newState) {
         World world = getWorld();
-        if (sideEffectSet.shouldApply(SideEffect.PLUGIN_EVENTS)) {
+        if (sideEffectSet.shouldApply(SideEffect.EVENTS)) {
             world.update(pos, oldState.getBlock());
         } else {
             // When we don't want events, manually run the physics without them.
@@ -142,7 +142,7 @@ public class WorldNativeAccess_v1_13_R2_2 implements WorldNativeAccess<Chunk, IB
         // a == updateNeighbors
         // b == updateDiagonalNeighbors
         oldState.b(world, pos, NOTIFY);
-        if (sideEffectSet.shouldApply(SideEffect.PLUGIN_EVENTS)) {
+        if (sideEffectSet.shouldApply(SideEffect.EVENTS)) {
             CraftWorld craftWorld = world.getWorld();
             if (craftWorld != null) {
                 BlockPhysicsEvent event = new BlockPhysicsEvent(
