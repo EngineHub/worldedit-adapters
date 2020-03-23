@@ -71,6 +71,7 @@ import com.sk89q.worldedit.world.block.BaseBlock;
 import com.sk89q.worldedit.world.block.BlockState;
 import com.sk89q.worldedit.world.block.BlockType;
 import com.sk89q.worldedit.world.block.BlockTypes;
+import com.sk89q.worldedit.world.item.ItemType;
 import net.minecraft.server.v1_14_R1.Block;
 import net.minecraft.server.v1_14_R1.BlockPosition;
 import net.minecraft.server.v1_14_R1.BlockStateBoolean;
@@ -92,6 +93,7 @@ import net.minecraft.server.v1_14_R1.IBlockData;
 import net.minecraft.server.v1_14_R1.IBlockState;
 import net.minecraft.server.v1_14_R1.INamable;
 import net.minecraft.server.v1_14_R1.IRegistry;
+import net.minecraft.server.v1_14_R1.Item;
 import net.minecraft.server.v1_14_R1.ItemActionContext;
 import net.minecraft.server.v1_14_R1.ItemStack;
 import net.minecraft.server.v1_14_R1.MinecraftKey;
@@ -289,6 +291,10 @@ public final class Spigot_v1_14_R4 implements BukkitImplAdapter {
         return IRegistry.BLOCK.get(MinecraftKey.a(blockType.getId()));
     }
 
+    private static Item getItemFromType(ItemType itemType) {
+        return IRegistry.ITEM.get(MinecraftKey.a(itemType.getId()));
+    }
+
     @Override
     public OptionalInt getInternalBlockStateId(BlockData data) {
         IBlockData state = ((CraftBlockData) data).getState();
@@ -427,6 +433,16 @@ public final class Spigot_v1_14_R4 implements BukkitImplAdapter {
     @Override
     public Component getRichBlockName(BlockType blockType) {
         return TranslatableComponent.of(getBlockFromType(blockType).l());
+    }
+
+    @Override
+    public Component getRichItemName(ItemType itemType) {
+        return TranslatableComponent.of(getItemFromType(itemType).getName());
+    }
+
+    @Override
+    public Component getRichItemName(BaseItemStack itemStack) {
+        return TranslatableComponent.of(CraftItemStack.asNMSCopy(BukkitAdapter.adapt(itemStack)).j());
     }
 
     @SuppressWarnings("unchecked")
