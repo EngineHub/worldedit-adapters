@@ -20,6 +20,7 @@
 package com.sk89q.worldedit.bukkit.adapter.impl;
 
 import com.mojang.authlib.GameProfile;
+import net.minecraft.server.v1_15_R1.Container;
 import net.minecraft.server.v1_15_R1.DamageSource;
 import net.minecraft.server.v1_15_R1.DimensionManager;
 import net.minecraft.server.v1_15_R1.Entity;
@@ -29,6 +30,7 @@ import net.minecraft.server.v1_15_R1.ITileInventory;
 import net.minecraft.server.v1_15_R1.PacketPlayInSettings;
 import net.minecraft.server.v1_15_R1.PlayerInteractManager;
 import net.minecraft.server.v1_15_R1.Statistic;
+import net.minecraft.server.v1_15_R1.TileEntitySign;
 import net.minecraft.server.v1_15_R1.Vec3D;
 import net.minecraft.server.v1_15_R1.WorldServer;
 import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
@@ -95,5 +97,13 @@ class FakePlayer_v1_15_R2 extends EntityPlayer {
     @Override
     public boolean p(boolean flag) { // canEat, search for foodData usage
         return true;
+    }
+
+    @Override
+    public void updateInventory(Container container) {
+    }
+
+    @Override
+    public void openSign(TileEntitySign tileentitysign) {
     }
 }
