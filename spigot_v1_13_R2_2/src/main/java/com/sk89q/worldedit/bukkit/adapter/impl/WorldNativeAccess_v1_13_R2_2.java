@@ -137,7 +137,7 @@ public class WorldNativeAccess_v1_13_R2_2 implements WorldNativeAccess<Chunk, IB
     }
 
     @Override
-    public void updateNeighbors(BlockPosition pos, IBlockData oldState, IBlockData newState) {
+    public void updateNeighbors(BlockPosition pos, IBlockData oldState, IBlockData newState, int recursionLimit) {
         World world = getWorld();
         // a == updateNeighbors
         // b == updateDiagonalNeighbors

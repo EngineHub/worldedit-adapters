@@ -6,33 +6,34 @@ import com.sk89q.worldedit.internal.block.BlockStateIdAccess;
 import com.sk89q.worldedit.internal.wna.WorldNativeAccess;
 import com.sk89q.worldedit.util.SideEffect;
 import com.sk89q.worldedit.util.SideEffectSet;
-import net.minecraft.server.v1_15_R1.Block;
-import net.minecraft.server.v1_15_R1.BlockPosition;
-import net.minecraft.server.v1_15_R1.Chunk;
-import net.minecraft.server.v1_15_R1.ChunkProviderServer;
-import net.minecraft.server.v1_15_R1.EnumDirection;
-import net.minecraft.server.v1_15_R1.IBlockData;
-import net.minecraft.server.v1_15_R1.NBTBase;
-import net.minecraft.server.v1_15_R1.NBTTagCompound;
-import net.minecraft.server.v1_15_R1.PlayerChunk;
-import net.minecraft.server.v1_15_R1.TileEntity;
-import net.minecraft.server.v1_15_R1.World;
-import org.bukkit.craftbukkit.v1_15_R1.CraftWorld;
-import org.bukkit.craftbukkit.v1_15_R1.block.data.CraftBlockData;
+import com.sk89q.worldedit.world.block.BlockState;
+import net.minecraft.server.v1_16_R1.Block;
+import net.minecraft.server.v1_16_R1.BlockPosition;
+import net.minecraft.server.v1_16_R1.Chunk;
+import net.minecraft.server.v1_16_R1.ChunkProviderServer;
+import net.minecraft.server.v1_16_R1.EnumDirection;
+import net.minecraft.server.v1_16_R1.IBlockData;
+import net.minecraft.server.v1_16_R1.NBTBase;
+import net.minecraft.server.v1_16_R1.NBTTagCompound;
+import net.minecraft.server.v1_16_R1.PlayerChunk;
+import net.minecraft.server.v1_16_R1.TileEntity;
+import net.minecraft.server.v1_16_R1.World;
+import org.bukkit.craftbukkit.v1_16_R1.CraftWorld;
+import org.bukkit.craftbukkit.v1_16_R1.block.data.CraftBlockData;
 import org.bukkit.event.block.BlockPhysicsEvent;
 
 import javax.annotation.Nullable;
 import java.lang.ref.WeakReference;
 import java.util.Objects;
 
-public class WorldNativeAccess_v1_15_R2 implements WorldNativeAccess<Chunk, IBlockData, BlockPosition> {
+public class WorldNativeAccess_v1_16_R1 implements WorldNativeAccess<Chunk, IBlockData, BlockPosition> {
     private static final int UPDATE = 1, NOTIFY = 2;
 
-    private final Spigot_v1_15_R2 adapter;
+    private final Spigot_v1_16_R1 adapter;
     private final WeakReference<World> world;
     private SideEffectSet sideEffectSet;
 
-    public WorldNativeAccess_v1_15_R2(Spigot_v1_15_R2 adapter, WeakReference<World> world) {
+    public WorldNativeAccess_v1_16_R1(Spigot_v1_16_R1 adapter, WeakReference<World> world) {
         this.adapter = adapter;
         this.world = world;
     }
@@ -52,7 +53,7 @@ public class WorldNativeAccess_v1_15_R2 implements WorldNativeAccess<Chunk, IBlo
     }
 
     @Override
-    public IBlockData toNative(com.sk89q.worldedit.world.block.BlockState state) {
+    public IBlockData toNative(BlockState state) {
         int stateId = BlockStateIdAccess.getBlockStateId(state);
         return BlockStateIdAccess.isValidInternalId(stateId)
             ? Block.getByCombinedId(stateId)
@@ -94,7 +95,7 @@ public class WorldNativeAccess_v1_15_R2 implements WorldNativeAccess<Chunk, IBlo
             return false;
         }
         NBTBase nativeTag = adapter.fromNative(tag);
-        Spigot_v1_15_R2.readTagIntoTileEntity((NBTTagCompound) nativeTag, tileEntity);
+        Spigot_v1_16_R1.readTagIntoTileEntity((NBTTagCompound) nativeTag, tileEntity);
         return true;
     }
 
@@ -142,7 +143,7 @@ public class WorldNativeAccess_v1_15_R2 implements WorldNativeAccess<Chunk, IBlo
         World world = getWorld();
         // a == updateNeighbors
         // b == updateDiagonalNeighbors
-        oldState.b(world, pos, NOTIFY);
+        oldState.b(world, pos, NOTIFY, recursionLimit);
         if (sideEffectSet.shouldApply(SideEffect.EVENTS)) {
             CraftWorld craftWorld = world.getWorld();
             if (craftWorld != null) {
@@ -153,8 +154,8 @@ public class WorldNativeAccess_v1_15_R2 implements WorldNativeAccess<Chunk, IBlo
                 }
             }
         }
-        newState.a(world, pos, NOTIFY);
-        newState.b(world, pos, NOTIFY);
+        newState.a(world, pos, NOTIFY, recursionLimit);
+        newState.b(world, pos, NOTIFY, recursionLimit);
     }
 
     @Override
