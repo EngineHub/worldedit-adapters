@@ -63,6 +63,7 @@ import com.sk89q.worldedit.util.SideEffect;
 import com.sk89q.worldedit.util.formatting.text.Component;
 import com.sk89q.worldedit.util.formatting.text.TranslatableComponent;
 import com.sk89q.worldedit.world.DataFixer;
+import com.sk89q.worldedit.world.RegenOptions;
 import com.sk89q.worldedit.world.block.BaseBlock;
 import com.sk89q.worldedit.world.block.BlockState;
 import com.sk89q.worldedit.world.block.BlockType;
@@ -492,7 +493,7 @@ public final class Spigot_v1_13_R2_2 implements BukkitImplAdapter {
     }
 
     @Override
-    public boolean regenerate(org.bukkit.World bukkitWorld, Region region, EditSession editSession) {
+    public boolean regenerate(org.bukkit.World bukkitWorld, Region region, EditSession editSession, RegenOptions options) {
         WorldServer originalWorld = ((CraftWorld) bukkitWorld).getHandle();
 
         File saveFolder = Files.createTempDir();

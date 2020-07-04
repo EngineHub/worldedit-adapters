@@ -27,6 +27,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.Futures;
 import com.mojang.datafixers.util.Either;
+import com.mojang.serialization.Dynamic;
 import com.mojang.serialization.Lifecycle;
 import com.sk89q.jnbt.ByteArrayTag;
 import com.sk89q.jnbt.ByteTag;
@@ -67,12 +68,17 @@ import com.sk89q.worldedit.util.SideEffect;
 import com.sk89q.worldedit.util.formatting.text.Component;
 import com.sk89q.worldedit.util.formatting.text.TranslatableComponent;
 import com.sk89q.worldedit.world.DataFixer;
+import com.sk89q.worldedit.world.RegenOptions;
+import com.sk89q.worldedit.world.biome.BiomeType;
+import com.sk89q.worldedit.world.biome.BiomeTypes;
 import com.sk89q.worldedit.world.block.BaseBlock;
 import com.sk89q.worldedit.world.block.BlockState;
 import com.sk89q.worldedit.world.block.BlockStateHolder;
 import com.sk89q.worldedit.world.block.BlockType;
 import com.sk89q.worldedit.world.block.BlockTypes;
 import com.sk89q.worldedit.world.item.ItemType;
+import net.minecraft.server.v1_16_R1.BiomeBase;
+import net.minecraft.server.v1_16_R1.BiomeStorage;
 import net.minecraft.server.v1_16_R1.Block;
 import net.minecraft.server.v1_16_R1.BlockPosition;
 import net.minecraft.server.v1_16_R1.BlockStateBoolean;
@@ -87,11 +93,13 @@ import net.minecraft.server.v1_16_R1.ChunkProviderServer;
 import net.minecraft.server.v1_16_R1.ChunkStatus;
 import net.minecraft.server.v1_16_R1.Convertable;
 import net.minecraft.server.v1_16_R1.DedicatedServer;
+import net.minecraft.server.v1_16_R1.DynamicOpsNBT;
 import net.minecraft.server.v1_16_R1.Entity;
 import net.minecraft.server.v1_16_R1.EntityTypes;
 import net.minecraft.server.v1_16_R1.EnumDirection;
 import net.minecraft.server.v1_16_R1.EnumHand;
 import net.minecraft.server.v1_16_R1.EnumInteractionResult;
+import net.minecraft.server.v1_16_R1.GeneratorSettings;
 import net.minecraft.server.v1_16_R1.IAsyncTaskHandler;
 import net.minecraft.server.v1_16_R1.IBlockData;
 import net.minecraft.server.v1_16_R1.IBlockState;
@@ -122,6 +130,7 @@ import net.minecraft.server.v1_16_R1.PacketPlayOutEntityStatus;
 import net.minecraft.server.v1_16_R1.PacketPlayOutTileEntityData;
 import net.minecraft.server.v1_16_R1.PlayerChunk;
 import net.minecraft.server.v1_16_R1.ResourceKey;
+import net.minecraft.server.v1_16_R1.SaveData;
 import net.minecraft.server.v1_16_R1.SystemUtils;
 import net.minecraft.server.v1_16_R1.TileEntity;
 import net.minecraft.server.v1_16_R1.Vec3D;
@@ -159,8 +168,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.OptionalInt;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -559,10 +570,10 @@ public final class Spigot_v1_16_R1 implements BukkitImplAdapter {
     }
 
     @Override
-    public boolean regenerate(org.bukkit.World bukkitWorld, Region region, EditSession editSession) {
+    public boolean regenerate(org.bukkit.World bukkitWorld, Region region, EditSession editSession, RegenOptions options) {
 
         try {
-            doRegen(bukkitWorld, region, editSession);
+            doRegen(bukkitWorld, region, editSession, options);
         } catch (Exception e) {
             throw new IllegalStateException("Regen failed.", e);
         }
@@ -570,7 +581,7 @@ public final class Spigot_v1_16_R1 implements BukkitImplAdapter {
         return true;
     }
 
-    private void doRegen(org.bukkit.World bukkitWorld, Region region, EditSession editSession) throws Exception {
+    private void doRegen(org.bukkit.World bukkitWorld, Region region, EditSession editSession, RegenOptions options) throws Exception {
         Path tempDir = Files.createTempDirectory("WorldEditWorldGen");
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             try {
@@ -582,9 +593,25 @@ public final class Spigot_v1_16_R1 implements BukkitImplAdapter {
         ChunkGenerator gen = bukkitWorld.getGenerator();
 
         Convertable convertable = Convertable.a(tempDir);
-        try (Convertable.ConversionSession session = convertable.c("worldeditregentempworld", getWorldDimKey(env))) {
+        ResourceKey<WorldDimension> worldDimKey = getWorldDimKey(env);
+        try (Convertable.ConversionSession session = convertable.c("worldeditregentempworld", worldDimKey)) {
             WorldServer originalWorld = ((CraftWorld) bukkitWorld).getHandle();
             WorldDataServer originalWorldData = originalWorld.worldDataServer;
+
+            long seed = options.getSeed().orElse(originalWorld.getSeed());
+
+            WorldDataServer levelProperties = (WorldDataServer) originalWorld.getServer().getServer().getSaveData();
+            GeneratorSettings newOpts = GeneratorSettings.a
+                .encodeStart(DynamicOpsNBT.a, levelProperties.getGeneratorSettings())
+                .flatMap(tag ->
+                    GeneratorSettings.a.parse(
+                        recursivelySetSeed(new Dynamic<>(DynamicOpsNBT.a, tag), seed, new HashSet<>())
+                    )
+                )
+                .result()
+                .orElseThrow(() -> new IllegalStateException("Unable to map GeneratorOptions"));
+
+
             WorldSettings newWorldSettings = new WorldSettings("worldeditregentempworld",
                 originalWorldData.b.getGameType(),
                 originalWorldData.b.hardcore,
@@ -592,9 +619,9 @@ public final class Spigot_v1_16_R1 implements BukkitImplAdapter {
                 originalWorldData.b.e(),
                 originalWorldData.b.getGameRules(),
                 originalWorldData.b.g());
-            WorldDataServer newWorldData = new WorldDataServer(newWorldSettings, originalWorldData.getGeneratorSettings(), Lifecycle.stable());
+            WorldDataServer newWorldData = new WorldDataServer(newWorldSettings, newOpts, Lifecycle.stable());
 
-            try (WorldServer freshWorld = new WorldServer(
+            WorldServer freshWorld = new WorldServer(
                 originalWorld.getMinecraftServer(),
                 originalWorld.getMinecraftServer().executorService,
                 session, newWorldData,
@@ -602,15 +629,17 @@ public final class Spigot_v1_16_R1 implements BukkitImplAdapter {
                 originalWorld.getTypeKey(),
                 originalWorld.getDimensionManager(),
                 new NoOpWorldLoadListener(),
-                originalWorld.getChunkProvider().chunkGenerator,
-                originalWorld.isDebugWorld(), originalWorld.getSeed(),
+                newOpts.e().a(worldDimKey).c(),
+                originalWorld.isDebugWorld(),
+                seed,
                 ImmutableList.of(),
                 false,
                 env, gen
-            )) {
-                freshWorld.savingDisabled = true;
-                regenForWorld(region, editSession, freshWorld);
+            );
+            try {
+                regenForWorld(region, editSession, freshWorld, options);
             } finally {
+                freshWorld.getChunkProvider().close(false);
                 FileUtils.deleteDirectory(tempDir.toFile());
             }
         } finally {
@@ -622,7 +651,31 @@ public final class Spigot_v1_16_R1 implements BukkitImplAdapter {
         }
     }
 
-    private void regenForWorld(Region region, EditSession editSession, WorldServer serverWorld) throws MaxChangedBlocksException {
+    @SuppressWarnings("unchecked")
+    private Dynamic<NBTBase> recursivelySetSeed(Dynamic<NBTBase> dynamic, long seed, Set<Dynamic<NBTBase>> seen) {
+        if (!seen.add(dynamic)) {
+            return dynamic;
+        }
+        return dynamic.updateMapValues(pair -> {
+            if (pair.getFirst().asString("").equals("seed")) {
+                return pair.mapSecond(v -> v.createLong(seed));
+            }
+            if (pair.getSecond().getValue() instanceof NBTTagCompound) {
+                return pair.mapSecond(v -> recursivelySetSeed((Dynamic<NBTBase>) v, seed, seen));
+            }
+            return pair;
+        });
+    }
+
+    private BiomeType adapt(BiomeBase origBiome) {
+        MinecraftKey key = IRegistry.BIOME.getKey(origBiome);
+        if (key == null) {
+            return null;
+        }
+        return BiomeTypes.get(key.toString());
+    }
+
+    private void regenForWorld(Region region, EditSession editSession, WorldServer serverWorld, RegenOptions options) throws MaxChangedBlocksException {
         List<CompletableFuture<IChunkAccess>> chunkLoadings = submitChunkLoadTasks(region, serverWorld);
         IAsyncTaskHandler executor;
         try {
@@ -660,6 +713,19 @@ public final class Spigot_v1_16_R1 implements BukkitImplAdapter {
                 state = state.toBaseBlock(((CompoundTag) toNative(tag)));
             }
             editSession.setBlock(vec, state);
+            if (options.shouldRegenBiomes()) {
+                BiomeStorage biomeIndex = chunk.getBiomeIndex();
+                if (biomeIndex != null) {
+                    if (!editSession.fullySupports3DBiomes()) {
+                        vec = vec.withY(0);
+                    }
+                    BiomeBase origBiome = biomeIndex.getBiome(vec.getBlockX(), vec.getBlockY(), vec.getBlockZ());
+                    BiomeType adaptedBiome = adapt(origBiome);
+                    if (adaptedBiome != null) {
+                        editSession.setBiome(vec, adaptedBiome);
+                    }
+                }
+            }
         }
     }
 
