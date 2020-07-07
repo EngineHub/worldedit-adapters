@@ -67,6 +67,7 @@ import com.sk89q.worldedit.util.Direction;
 import com.sk89q.worldedit.util.SideEffect;
 import com.sk89q.worldedit.util.formatting.text.Component;
 import com.sk89q.worldedit.util.formatting.text.TranslatableComponent;
+import com.sk89q.worldedit.util.io.file.SafeFiles;
 import com.sk89q.worldedit.world.DataFixer;
 import com.sk89q.worldedit.world.RegenOptions;
 import com.sk89q.worldedit.world.biome.BiomeType;
@@ -580,16 +581,10 @@ public final class Spigot_v1_16_R1 implements BukkitImplAdapter {
     }
 
     private void doRegen(org.bukkit.World bukkitWorld, Region region, EditSession editSession, RegenOptions options) throws Exception {
-        Path tempDir = Files.createTempDirectory("WorldEditWorldGen");
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            try {
-                FileUtils.deleteDirectory(tempDir.toFile());
-            } catch (IOException ignored) {
-            }
-        }));
         Environment env = bukkitWorld.getEnvironment();
         ChunkGenerator gen = bukkitWorld.getGenerator();
 
+        Path tempDir = Files.createTempDirectory("WorldEditWorldGen");
         Convertable convertable = Convertable.a(tempDir);
         ResourceKey<WorldDimension> worldDimKey = getWorldDimKey(env);
         try (Convertable.ConversionSession session = convertable.c("worldeditregentempworld", worldDimKey)) {
@@ -638,7 +633,6 @@ public final class Spigot_v1_16_R1 implements BukkitImplAdapter {
                 regenForWorld(region, editSession, freshWorld, options);
             } finally {
                 freshWorld.getChunkProvider().close(false);
-                FileUtils.deleteDirectory(tempDir.toFile());
             }
         } finally {
             try {
@@ -646,6 +640,7 @@ public final class Spigot_v1_16_R1 implements BukkitImplAdapter {
                 map.remove("worldeditregentempworld");
             } catch (IllegalAccessException ignored) {
             }
+            SafeFiles.tryHardToDeleteDir(tempDir);
         }
     }
 
