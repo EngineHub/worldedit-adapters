@@ -709,9 +709,6 @@ public final class Spigot_v1_16_R1 implements BukkitImplAdapter {
             if (options.shouldRegenBiomes()) {
                 BiomeStorage biomeIndex = chunk.getBiomeIndex();
                 if (biomeIndex != null) {
-                    if (!editSession.fullySupports3DBiomes()) {
-                        vec = vec.withY(0);
-                    }
                     BiomeBase origBiome = biomeIndex.getBiome(vec.getBlockX(), vec.getBlockY(), vec.getBlockZ());
                     BiomeType adaptedBiome = adapt(origBiome);
                     if (adaptedBiome != null) {
