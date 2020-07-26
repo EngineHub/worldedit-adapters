@@ -44,14 +44,14 @@ import com.sk89q.jnbt.NBTConstants;
 import com.sk89q.jnbt.ShortTag;
 import com.sk89q.jnbt.StringTag;
 import com.sk89q.jnbt.Tag;
-import com.sk89q.worldedit.EditSession;
-import com.sk89q.worldedit.MaxChangedBlocksException;
+import com.sk89q.worldedit.WorldEditException;
 import com.sk89q.worldedit.blocks.BaseItem;
 import com.sk89q.worldedit.blocks.BaseItemStack;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.bukkit.adapter.BukkitImplAdapter;
 import com.sk89q.worldedit.entity.BaseEntity;
 import com.sk89q.worldedit.extension.platform.Watchdog;
+import com.sk89q.worldedit.extent.Extent;
 import com.sk89q.worldedit.internal.Constants;
 import com.sk89q.worldedit.internal.block.BlockStateIdAccess;
 import com.sk89q.worldedit.internal.wna.WorldNativeAccess;
@@ -569,10 +569,10 @@ public final class Spigot_v1_16_R1 implements BukkitImplAdapter {
     }
 
     @Override
-    public boolean regenerate(org.bukkit.World bukkitWorld, Region region, EditSession editSession, RegenOptions options) {
+    public boolean regenerate(org.bukkit.World bukkitWorld, Region region, Extent extent, RegenOptions options) {
 
         try {
-            doRegen(bukkitWorld, region, editSession, options);
+            doRegen(bukkitWorld, region, extent, options);
         } catch (Exception e) {
             throw new IllegalStateException("Regen failed.", e);
         }
@@ -580,7 +580,7 @@ public final class Spigot_v1_16_R1 implements BukkitImplAdapter {
         return true;
     }
 
-    private void doRegen(org.bukkit.World bukkitWorld, Region region, EditSession editSession, RegenOptions options) throws Exception {
+    private void doRegen(org.bukkit.World bukkitWorld, Region region, Extent extent, RegenOptions options) throws Exception {
         Environment env = bukkitWorld.getEnvironment();
         ChunkGenerator gen = bukkitWorld.getGenerator();
 
@@ -630,7 +630,7 @@ public final class Spigot_v1_16_R1 implements BukkitImplAdapter {
                 env, gen
             );
             try {
-                regenForWorld(region, editSession, freshWorld, options);
+                regenForWorld(region, extent, freshWorld, options);
             } finally {
                 freshWorld.getChunkProvider().close(false);
             }
@@ -668,7 +668,8 @@ public final class Spigot_v1_16_R1 implements BukkitImplAdapter {
         return BiomeTypes.get(key.toString());
     }
 
-    private void regenForWorld(Region region, EditSession editSession, WorldServer serverWorld, RegenOptions options) throws MaxChangedBlocksException {
+    private void regenForWorld(Region region, Extent extent, WorldServer serverWorld, RegenOptions options)
+        throws WorldEditException {
         List<CompletableFuture<IChunkAccess>> chunkLoadings = submitChunkLoadTasks(region, serverWorld);
         IAsyncTaskHandler executor;
         try {
@@ -705,14 +706,14 @@ public final class Spigot_v1_16_R1 implements BukkitImplAdapter {
                 blockEntity.save(tag);
                 state = state.toBaseBlock(((CompoundTag) toNative(tag)));
             }
-            editSession.setBlock(vec, state);
+            extent.setBlock(vec, state.toBaseBlock());
             if (options.shouldRegenBiomes()) {
                 BiomeStorage biomeIndex = chunk.getBiomeIndex();
                 if (biomeIndex != null) {
                     BiomeBase origBiome = biomeIndex.getBiome(vec.getBlockX(), vec.getBlockY(), vec.getBlockZ());
                     BiomeType adaptedBiome = adapt(origBiome);
                     if (adaptedBiome != null) {
-                        editSession.setBiome(vec, adaptedBiome);
+                        extent.setBiome(vec, adaptedBiome);
                     }
                 }
             }

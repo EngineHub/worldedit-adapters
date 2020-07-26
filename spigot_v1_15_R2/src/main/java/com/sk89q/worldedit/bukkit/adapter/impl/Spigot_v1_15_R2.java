@@ -41,8 +41,7 @@ import com.sk89q.jnbt.NBTConstants;
 import com.sk89q.jnbt.ShortTag;
 import com.sk89q.jnbt.StringTag;
 import com.sk89q.jnbt.Tag;
-import com.sk89q.worldedit.EditSession;
-import com.sk89q.worldedit.MaxChangedBlocksException;
+import com.sk89q.worldedit.WorldEditException;
 import com.sk89q.worldedit.blocks.BaseItem;
 import com.sk89q.worldedit.blocks.BaseItemStack;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
@@ -50,6 +49,7 @@ import com.sk89q.worldedit.bukkit.BukkitWorld;
 import com.sk89q.worldedit.bukkit.adapter.BukkitImplAdapter;
 import com.sk89q.worldedit.entity.BaseEntity;
 import com.sk89q.worldedit.extension.platform.Watchdog;
+import com.sk89q.worldedit.extent.Extent;
 import com.sk89q.worldedit.internal.Constants;
 import com.sk89q.worldedit.internal.block.BlockStateIdAccess;
 import com.sk89q.worldedit.internal.wna.WorldNativeAccess;
@@ -537,7 +537,7 @@ public final class Spigot_v1_15_R2 implements BukkitImplAdapter {
     }
 
     @Override
-    public boolean regenerate(org.bukkit.World bukkitWorld, Region region, EditSession editSession, RegenOptions options) {
+    public boolean regenerate(org.bukkit.World bukkitWorld, Region region, Extent extent, RegenOptions options) {
         WorldServer originalWorld = ((CraftWorld) bukkitWorld).getHandle();
 
         File saveFolder = Files.createTempDir();
@@ -571,12 +571,12 @@ public final class Spigot_v1_15_R2 implements BukkitImplAdapter {
                 CraftWorld craftWorld = freshWorld.getWorld();
                 BukkitWorld from = new BukkitWorld(craftWorld);
                 for (BlockVector3 vec : region) {
-                    editSession.setBlock(vec, from.getFullBlock(vec));
+                    extent.setBlock(vec, from.getFullBlock(vec));
                 }
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-        } catch (MaxChangedBlocksException e) {
+        } catch (WorldEditException e) {
             throw new RuntimeException(e);
         } finally {
             saveFolder.delete();
