@@ -594,7 +594,8 @@ public final class Spigot_v1_15_R2 implements BukkitImplAdapter {
             SideEffect.LIGHTING,
             SideEffect.VALIDATION,
             SideEffect.ENTITY_AI,
-            SideEffect.EVENTS
+            SideEffect.EVENTS,
+            SideEffect.UPDATE
     );
 
     @Override
@@ -613,7 +614,6 @@ public final class Spigot_v1_15_R2 implements BukkitImplAdapter {
      * @param foreign non-native NMS NBT structure
      * @return native WorldEdit NBT structure
      */
-    @SuppressWarnings("unchecked")
     Tag toNative(NBTBase foreign) {
         if (foreign == null) {
             return null;
