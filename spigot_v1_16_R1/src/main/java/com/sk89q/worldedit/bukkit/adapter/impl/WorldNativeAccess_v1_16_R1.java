@@ -12,6 +12,7 @@ import net.minecraft.server.v1_16_R1.BlockPosition;
 import net.minecraft.server.v1_16_R1.Chunk;
 import net.minecraft.server.v1_16_R1.ChunkProviderServer;
 import net.minecraft.server.v1_16_R1.EnumDirection;
+import net.minecraft.server.v1_16_R1.GeneratorAccess;
 import net.minecraft.server.v1_16_R1.IBlockData;
 import net.minecraft.server.v1_16_R1.NBTBase;
 import net.minecraft.server.v1_16_R1.NBTTagCompound;
@@ -154,7 +155,7 @@ public class WorldNativeAccess_v1_16_R1 implements WorldNativeAccess<Chunk, IBlo
                 }
             }
         }
-        newState.a(world, pos, NOTIFY, recursionLimit);
+        newState.a((GeneratorAccess) world, pos, NOTIFY, recursionLimit);
         newState.b(world, pos, NOTIFY, recursionLimit);
     }
 
