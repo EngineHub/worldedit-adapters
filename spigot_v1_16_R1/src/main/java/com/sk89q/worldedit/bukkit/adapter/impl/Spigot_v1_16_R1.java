@@ -144,7 +144,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World.Environment;
 import org.bukkit.block.data.BlockData;
-import org.bukkit.craftbukkit.libs.org.apache.commons.io.FileUtils;
 import org.bukkit.craftbukkit.v1_16_R1.CraftServer;
 import org.bukkit.craftbukkit.v1_16_R1.CraftWorld;
 import org.bukkit.craftbukkit.v1_16_R1.block.data.CraftBlockData;
@@ -159,7 +158,6 @@ import org.spigotmc.SpigotConfig;
 import org.spigotmc.WatchdogThread;
 
 import javax.annotation.Nullable;
-import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -202,7 +200,7 @@ public final class Spigot_v1_16_R1 implements BukkitImplAdapter {
         CraftServer.class.cast(Bukkit.getServer());
 
 
-        if (getDataVersion() != 2567) throw new UnsupportedClassVersionError("Not 1.16.1!");
+        if (CraftMagicNumbers.INSTANCE.getDataVersion() != 2567) throw new UnsupportedClassVersionError("Not 1.16.1!");
 
         // The list of tags on an NBTTagList
         nbtListTagListField = NBTTagList.class.getDeclaredField("list");
@@ -218,7 +216,7 @@ public final class Spigot_v1_16_R1 implements BukkitImplAdapter {
         chunkProviderExecutorField = ChunkProviderServer.class.getDeclaredField("serverThreadQueue");
         chunkProviderExecutorField.setAccessible(true);
 
-        new DataConverters_1_16_R1(getDataVersion(), this).build(ForkJoinPool.commonPool());
+        new DataConverters_1_16_R1(CraftMagicNumbers.INSTANCE.getDataVersion(), this).build(ForkJoinPool.commonPool());
 
         Watchdog watchdog;
         try {
@@ -237,11 +235,6 @@ public final class Spigot_v1_16_R1 implements BukkitImplAdapter {
             Class.forName("org.spigotmc.SpigotConfig");
             SpigotConfig.config.set("world-settings.worldeditregentempworld.verbose", false);
         } catch (ClassNotFoundException ignored) {}
-    }
-
-    @Override
-    public int getDataVersion() {
-        return CraftMagicNumbers.INSTANCE.getDataVersion();
     }
 
     @Override
