@@ -177,7 +177,7 @@ public final class Spigot_v1_13_R2_2 implements BukkitImplAdapter {
         // Spigot broke names mid-version, this is a test to see if it's before or after.
         new NBTTagString("test").asString();
 
-        new DataConverters_1_13_R2_2(getDataVersion(), this).build(ForkJoinPool.commonPool());
+        new DataConverters_1_13_R2_2(CraftMagicNumbers.INSTANCE.getDataVersion(), this).build(ForkJoinPool.commonPool());
 
         Watchdog watchdog;
         try {
@@ -196,11 +196,6 @@ public final class Spigot_v1_13_R2_2 implements BukkitImplAdapter {
             Class.forName("org.spigotmc.SpigotConfig");
             SpigotConfig.config.set("world-settings.worldeditregentempworld.verbose", false);
         } catch (ClassNotFoundException ignored) {}
-    }
-
-    @Override
-    public int getDataVersion() {
-        return CraftMagicNumbers.INSTANCE.getDataVersion();
     }
 
     @Override
@@ -507,7 +502,7 @@ public final class Spigot_v1_13_R2_2 implements BukkitImplAdapter {
             MinecraftServer server = originalWorld.getServer().getServer();
 
             WorldData newWorldData = new WorldData(originalWorld.worldData.a((NBTTagCompound) null),
-                    server.dataConverterManager, getDataVersion(), null);
+                    server.dataConverterManager, CraftMagicNumbers.INSTANCE.getDataVersion(), null);
             newWorldData.checkName("worldeditregentempworld");
             WorldNBTStorage saveHandler = new WorldNBTStorage(saveFolder,
                     originalWorld.getDataManager().getDirectory().getName(), server, server.dataConverterManager);

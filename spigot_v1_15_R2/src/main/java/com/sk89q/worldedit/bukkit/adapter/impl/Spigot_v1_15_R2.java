@@ -177,7 +177,7 @@ public final class Spigot_v1_15_R2 implements BukkitImplAdapter {
         CraftServer.class.cast(Bukkit.getServer());
 
 
-        if (getDataVersion() != 2230) throw new UnsupportedClassVersionError("Not 1.15.2!");
+        if (CraftMagicNumbers.INSTANCE.getDataVersion() != 2230) throw new UnsupportedClassVersionError("Not 1.15.2!");
 
         // The list of tags on an NBTTagList
         nbtListTagListField = NBTTagList.class.getDeclaredField("list");
@@ -186,7 +186,7 @@ public final class Spigot_v1_15_R2 implements BukkitImplAdapter {
         serverWorldsField = CraftServer.class.getDeclaredField("worlds");
         serverWorldsField.setAccessible(true);
 
-        new DataConverters_1_15_R2(getDataVersion(), this).build(ForkJoinPool.commonPool());
+        new DataConverters_1_15_R2(CraftMagicNumbers.INSTANCE.getDataVersion(), this).build(ForkJoinPool.commonPool());
 
         Watchdog watchdog;
         try {
@@ -205,11 +205,6 @@ public final class Spigot_v1_15_R2 implements BukkitImplAdapter {
             Class.forName("org.spigotmc.SpigotConfig");
             SpigotConfig.config.set("world-settings.worldeditregentempworld.verbose", false);
         } catch (ClassNotFoundException ignored) {}
-    }
-
-    @Override
-    public int getDataVersion() {
-        return CraftMagicNumbers.INSTANCE.getDataVersion();
     }
 
     @Override
@@ -550,7 +545,7 @@ public final class Spigot_v1_15_R2 implements BukkitImplAdapter {
             MinecraftServer server = originalWorld.getServer().getServer();
 
             WorldData newWorldData = new WorldData(originalWorld.worldData.a((NBTTagCompound) null),
-                    server.dataConverterManager, getDataVersion(), null);
+                    server.dataConverterManager, CraftMagicNumbers.INSTANCE.getDataVersion(), null);
             newWorldData.setName("worldeditregentempworld");
             WorldNBTStorage saveHandler = new WorldNBTStorage(saveFolder,
                     originalWorld.getDataManager().getDirectory().getName(), server, server.dataConverterManager);

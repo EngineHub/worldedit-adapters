@@ -179,7 +179,7 @@ public final class Spigot_v1_14_R4 implements BukkitImplAdapter {
         CraftServer.class.cast(Bukkit.getServer());
 
 
-        if (getDataVersion() != 1976) throw new UnsupportedClassVersionError("Not 1.14.4!");
+        if (CraftMagicNumbers.INSTANCE.getDataVersion() != 1976) throw new UnsupportedClassVersionError("Not 1.14.4!");
 
         // The list of tags on an NBTTagList
         nbtListTagListField = NBTTagList.class.getDeclaredField("list");
@@ -192,7 +192,7 @@ public final class Spigot_v1_14_R4 implements BukkitImplAdapter {
         nbtCreateTagMethod = NBTBase.class.getDeclaredMethod("createTag", byte.class);
         nbtCreateTagMethod.setAccessible(true);
 
-        new DataConverters_1_14_R4(getDataVersion(), this).build(ForkJoinPool.commonPool());
+        new DataConverters_1_14_R4(CraftMagicNumbers.INSTANCE.getDataVersion(), this).build(ForkJoinPool.commonPool());
 
         Watchdog watchdog;
         try {
@@ -211,11 +211,6 @@ public final class Spigot_v1_14_R4 implements BukkitImplAdapter {
             Class.forName("org.spigotmc.SpigotConfig");
             SpigotConfig.config.set("world-settings.worldeditregentempworld.verbose", false);
         } catch (ClassNotFoundException ignored) {}
-    }
-
-    @Override
-    public int getDataVersion() {
-        return CraftMagicNumbers.INSTANCE.getDataVersion();
     }
 
     @Override
@@ -560,7 +555,7 @@ public final class Spigot_v1_14_R4 implements BukkitImplAdapter {
             MinecraftServer server = originalWorld.getServer().getServer();
 
             WorldData newWorldData = new WorldData(originalWorld.worldData.a((NBTTagCompound) null),
-                    server.dataConverterManager, getDataVersion(), null);
+                    server.dataConverterManager, CraftMagicNumbers.INSTANCE.getDataVersion(), null);
             newWorldData.setName("worldeditregentempworld");
             WorldNBTStorage saveHandler = new WorldNBTStorage(saveFolder,
                     originalWorld.getDataManager().getDirectory().getName(), server, server.dataConverterManager);
