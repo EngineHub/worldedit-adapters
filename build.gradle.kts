@@ -47,7 +47,7 @@ mapOf(
     "spigot_v1_14_R4" to "1.14.4",
     "spigot_v1_15_R2" to "1.15.2",
     "spigot_v1_16_R1" to "1.16.1",
-    "spigot_v1_16_R2" to "1.16.2"
+    "spigot_v1_16_R2" to "1.16.3"
 ).forEach { (projectName, ver) ->
     project(":$projectName") {
         dependencies.implementation("org.spigotmc", "spigot", "${ver}-R0.1-SNAPSHOT")

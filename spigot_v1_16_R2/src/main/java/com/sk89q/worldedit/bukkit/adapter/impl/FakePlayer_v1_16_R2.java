@@ -41,6 +41,7 @@ import java.util.UUID;
 
 class FakePlayer_v1_16_R2 extends EntityPlayer {
     private static final GameProfile FAKE_WORLDEDIT_PROFILE = new GameProfile(UUID.nameUUIDFromBytes("worldedit".getBytes()), "[WorldEdit]");
+    private static final Vec3D ORIGIN = new Vec3D(0.0D, 0.0D, 0.0D);
 
     FakePlayer_v1_16_R2(WorldServer world) {
         super(world.getMinecraftServer(), world, FAKE_WORLDEDIT_PROFILE, new PlayerInteractManager(world));
@@ -48,7 +49,7 @@ class FakePlayer_v1_16_R2 extends EntityPlayer {
 
     @Override
     public Vec3D getPositionVector() {
-        return Vec3D.a;
+        return ORIGIN;
     }
 
     @Override

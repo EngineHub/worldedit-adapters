@@ -202,7 +202,7 @@ public final class Spigot_v1_16_R2 implements BukkitImplAdapter {
         CraftServer.class.cast(Bukkit.getServer());
 
 
-        if (getDataVersion() != 2578) throw new UnsupportedClassVersionError("Not 1.16.2!");
+        if (getDataVersion() != 2578 && getDataVersion() != 2580) throw new UnsupportedClassVersionError("Not 1.16.2/.3!");
 
         // The list of tags on an NBTTagList
         nbtListTagListField = NBTTagList.class.getDeclaredField("list");
