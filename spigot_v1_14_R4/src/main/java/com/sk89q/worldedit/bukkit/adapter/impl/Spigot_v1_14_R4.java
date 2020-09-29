@@ -542,6 +542,13 @@ public final class Spigot_v1_14_R4 implements BukkitImplAdapter {
     }
 
     @Override
+    public boolean canPlaceAt(org.bukkit.World world, BlockVector3 position, BlockState blockState) {
+        int internalId = BlockStateIdAccess.getBlockStateId(blockState);
+        IBlockData blockData = Block.getByCombinedId(internalId);
+        return blockData.canPlace(((CraftWorld) world).getHandle(), new BlockPosition(position.getX(), position.getY(), position.getZ()));
+    }
+
+    @Override
     public boolean regenerate(org.bukkit.World bukkitWorld, Region region, Extent extent, RegenOptions options) {
         WorldServer originalWorld = ((CraftWorld) bukkitWorld).getHandle();
 
