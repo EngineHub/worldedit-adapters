@@ -473,6 +473,13 @@ public final class Spigot_v1_13_R2_2 implements BukkitImplAdapter {
     }
 
     @Override
+    public boolean canPlaceAt(org.bukkit.World world, BlockVector3 position, BlockState blockState) {
+        int internalId = BlockStateIdAccess.getBlockStateId(blockState);
+        IBlockData blockData = Block.getByCombinedId(internalId);
+        return blockData.canPlace(((CraftWorld) world).getHandle(), new BlockPosition(position.getX(), position.getY(), position.getZ()));
+    }
+
+    @Override
     public org.bukkit.inventory.ItemStack adapt(BaseItemStack item) {
         ItemStack stack = new ItemStack(IRegistry.ITEM.get(MinecraftKey.a(item.getType().getId())), item.getAmount());
         stack.setTag(((NBTTagCompound) fromNative(item.getNbtData())));
