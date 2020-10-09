@@ -1,4 +1,4 @@
-![WorldEdit](http://static.sk89q.com/readme/worldedit.png)
+![WorldEdit](worldedit-logo.png)
 =========
 
 This repository is for adapter classes used by WorldEdit to work with
@@ -18,4 +18,4 @@ Please read CONTRIBUTING.md for important guidelines to follow.
 Links
 -----
 
-* [WorldEdit repo](https://github.com/sk89q/worldedit)
+* [WorldEdit repo](https://github.com/EngineHub/WorldEdit)
