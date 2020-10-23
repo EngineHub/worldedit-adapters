@@ -1,5 +1,6 @@
-![WorldEdit](http://static.sk89q.com/readme/worldedit.png)
-=========
+<h1>
+    <img src="https://github.com/EngineHub/WorldEdit/raw/master/worldedit-logo.svg" alt="WorldEdit" width="400" />
+</h1>
 
 This repository is for adapter classes used by WorldEdit to work with
 various platforms.
