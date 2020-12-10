@@ -550,8 +550,7 @@ public final class Spigot_v1_13_R2_2 implements BukkitImplAdapter {
             SideEffect.LIGHTING,
             SideEffect.VALIDATION,
             SideEffect.ENTITY_AI,
-            SideEffect.EVENTS,
-            SideEffect.UPDATE
+            SideEffect.EVENTS
     );
 
     @Override
