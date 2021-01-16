@@ -203,7 +203,7 @@ public final class Spigot_v1_16_R3 implements BukkitImplAdapter {
 
 
         int dataVersion = CraftMagicNumbers.INSTANCE.getDataVersion();
-        if (dataVersion != 2584) throw new UnsupportedClassVersionError("Not 1.16.4!");
+        if (dataVersion != 2584 && dataVersion != 2586) throw new UnsupportedClassVersionError("Not 1.16.4/1.16.5!");
 
         // The list of tags on an NBTTagList
         nbtListTagListField = NBTTagList.class.getDeclaredField("list");
