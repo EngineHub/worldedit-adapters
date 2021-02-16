@@ -15,7 +15,7 @@ import com.mojang.datafixers.DataFixer;
 import com.mojang.datafixers.DataFixerBuilder;
 import com.mojang.datafixers.Dynamic;
 import com.mojang.datafixers.schemas.Schema;
-import com.sk89q.jnbt.CompoundTag;
+import com.sk89q.worldedit.util.nbt.CompoundBinaryTag;
 import net.minecraft.server.v1_15_R1.ChatComponentText;
 import net.minecraft.server.v1_15_R1.ChatDeserializer;
 import net.minecraft.server.v1_15_R1.DataConverterRegistry;
@@ -35,7 +35,6 @@ import net.minecraft.server.v1_15_R1.UtilColor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import javax.annotation.Nullable;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.EnumMap;
@@ -49,6 +48,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 
 /**
  * Handles converting all Pre 1.13.2 data using the Legacy DataFix System (ported to 1.13.2)
@@ -69,11 +69,11 @@ class DataConverters_1_15_R2 extends DataFixerBuilder implements com.sk89q.world
     @Override
     public <T> T fixUp(FixType<T> type, T original, int srcVer) {
         if (type == FixTypes.CHUNK) {
-            return (T) fixChunk((CompoundTag) original, srcVer);
+            return (T) fixChunk((CompoundBinaryTag) original, srcVer);
         } else if (type == FixTypes.BLOCK_ENTITY) {
-            return (T) fixBlockEntity((CompoundTag) original, srcVer);
+            return (T) fixBlockEntity((CompoundBinaryTag) original, srcVer);
         } else if (type == FixTypes.ENTITY) {
-            return (T) fixEntity((CompoundTag) original, srcVer);
+            return (T) fixEntity((CompoundBinaryTag) original, srcVer);
         } else if (type == FixTypes.BLOCK_STATE) {
             return (T) fixBlockState((String) original, srcVer);
         } else if (type == FixTypes.ITEM_TYPE) {
@@ -84,22 +84,22 @@ class DataConverters_1_15_R2 extends DataFixerBuilder implements com.sk89q.world
         return original;
     }
 
-    private CompoundTag fixChunk(CompoundTag originalChunk, int srcVer) {
+    private CompoundBinaryTag fixChunk(CompoundBinaryTag originalChunk, int srcVer) {
         NBTTagCompound tag = (NBTTagCompound) adapter.fromNative(originalChunk);
         NBTTagCompound fixed = convert(LegacyType.CHUNK, tag, srcVer);
-        return (CompoundTag) adapter.toNative(fixed);
+        return (CompoundBinaryTag) adapter.toNative(fixed);
     }
 
-    private CompoundTag fixBlockEntity(CompoundTag origTileEnt, int srcVer) {
+    private CompoundBinaryTag fixBlockEntity(CompoundBinaryTag origTileEnt, int srcVer) {
         NBTTagCompound tag = (NBTTagCompound) adapter.fromNative(origTileEnt);
         NBTTagCompound fixed = convert(LegacyType.BLOCK_ENTITY, tag, srcVer);
-        return (CompoundTag) adapter.toNative(fixed);
+        return (CompoundBinaryTag) adapter.toNative(fixed);
     }
 
-    private CompoundTag fixEntity(CompoundTag origEnt, int srcVer) {
+    private CompoundBinaryTag fixEntity(CompoundBinaryTag origEnt, int srcVer) {
         NBTTagCompound tag = (NBTTagCompound) adapter.fromNative(origEnt);
         NBTTagCompound fixed = convert(LegacyType.ENTITY, tag, srcVer);
-        return (CompoundTag) adapter.toNative(fixed);
+        return (CompoundBinaryTag) adapter.toNative(fixed);
     }
 
     private String fixBlockState(String blockState, int srcVer) {

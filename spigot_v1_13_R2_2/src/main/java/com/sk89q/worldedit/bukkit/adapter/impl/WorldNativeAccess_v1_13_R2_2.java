@@ -1,11 +1,11 @@
 package com.sk89q.worldedit.bukkit.adapter.impl;
 
-import com.sk89q.jnbt.CompoundTag;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.internal.block.BlockStateIdAccess;
 import com.sk89q.worldedit.internal.wna.WorldNativeAccess;
 import com.sk89q.worldedit.util.SideEffect;
 import com.sk89q.worldedit.util.SideEffectSet;
+import com.sk89q.worldedit.util.nbt.CompoundBinaryTag;
 import net.minecraft.server.v1_13_R2.Block;
 import net.minecraft.server.v1_13_R2.BlockPosition;
 import net.minecraft.server.v1_13_R2.Chunk;
@@ -20,9 +20,9 @@ import org.bukkit.craftbukkit.v1_13_R2.CraftWorld;
 import org.bukkit.craftbukkit.v1_13_R2.block.data.CraftBlockData;
 import org.bukkit.event.block.BlockPhysicsEvent;
 
-import javax.annotation.Nullable;
 import java.lang.ref.WeakReference;
 import java.util.Objects;
+import javax.annotation.Nullable;
 
 public class WorldNativeAccess_v1_13_R2_2 implements WorldNativeAccess<Chunk, IBlockData, BlockPosition> {
     private static final int UPDATE = 1, NOTIFY = 2;
@@ -85,7 +85,7 @@ public class WorldNativeAccess_v1_13_R2_2 implements WorldNativeAccess<Chunk, IB
     }
 
     @Override
-    public boolean updateTileEntity(BlockPosition position, CompoundTag tag) {
+    public boolean updateTileEntity(BlockPosition position, CompoundBinaryTag tag) {
         // We will assume that the tile entity was created for us,
         // though we do not do this on the other versions
         TileEntity tileEntity = getWorld().getTileEntity(position);
