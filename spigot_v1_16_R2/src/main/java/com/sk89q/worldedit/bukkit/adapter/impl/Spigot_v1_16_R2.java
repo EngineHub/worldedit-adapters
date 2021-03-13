@@ -225,7 +225,7 @@ public final class Spigot_v1_16_R2 implements BukkitImplAdapter {
         try {
             Class.forName("org.spigotmc.WatchdogThread");
             watchdog = new SpigotWatchdog();
-        } catch (ClassNotFoundException | NoSuchFieldException | IllegalAccessException e) {
+        } catch (ClassNotFoundException | NoSuchFieldException e) {
             try {
                 watchdog = new MojangWatchdog(((CraftServer) Bukkit.getServer()).getServer());
             } catch (NoSuchFieldException ex) {
@@ -915,14 +915,14 @@ public final class Spigot_v1_16_R2 implements BukkitImplAdapter {
         watchdog.tick();
     }
 
-    private static class SpigotWatchdog implements Watchdog {
-        private final WatchdogThread instance;
+    private class SpigotWatchdog implements Watchdog {
+        private final Field instanceField;
         private final Field lastTickField;
 
-        SpigotWatchdog() throws NoSuchFieldException, IllegalAccessException {
+        SpigotWatchdog() throws NoSuchFieldException {
             Field instanceField = WatchdogThread.class.getDeclaredField("instance");
             instanceField.setAccessible(true);
-            this.instance = (WatchdogThread) instanceField.get(null);
+            this.instanceField = instanceField;
 
             Field lastTickField = WatchdogThread.class.getDeclaredField("lastTick");
             lastTickField.setAccessible(true);
@@ -932,10 +932,12 @@ public final class Spigot_v1_16_R2 implements BukkitImplAdapter {
         @Override
         public void tick() {
             try {
+                WatchdogThread instance = (WatchdogThread) this.instanceField.get(null);
                 if ((long) lastTickField.get(instance) != 0) {
                     WatchdogThread.tick();
                 }
-            } catch (IllegalAccessException ignored) {
+            } catch (IllegalAccessException e) {
+                logger.log(Level.WARNING, "Failed to tick watchdog", e);
             }
         }
     }
