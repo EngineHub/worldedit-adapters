@@ -253,6 +253,7 @@ public final class Spigot_v1_17_R1 implements BukkitImplAdapter {
      */
     static void readTagIntoTileEntity(NBTTagCompound tag, TileEntity tileEntity) {
         tileEntity.load(tag);
+        tileEntity.update();
     }
 
     /**

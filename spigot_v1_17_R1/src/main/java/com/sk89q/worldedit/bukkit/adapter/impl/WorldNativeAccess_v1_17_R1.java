@@ -89,8 +89,7 @@ public class WorldNativeAccess_v1_17_R1 implements WorldNativeAccess<Chunk, IBlo
 
     @Override
     public boolean updateTileEntity(BlockPosition position, CompoundTag tag) {
-        // We will assume that the tile entity was created for us,
-        // though we do not do this on the other versions
+        // We will assume that the tile entity was created for us
         TileEntity tileEntity = getWorld().getTileEntity(position);
         if (tileEntity == null) {
             return false;
