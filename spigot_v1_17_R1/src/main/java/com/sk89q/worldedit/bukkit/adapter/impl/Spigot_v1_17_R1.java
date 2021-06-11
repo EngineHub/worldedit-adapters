@@ -29,6 +29,21 @@ import com.google.common.util.concurrent.Futures;
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Dynamic;
 import com.mojang.serialization.Lifecycle;
+import com.sk89q.jnbt.ByteArrayTag;
+import com.sk89q.jnbt.ByteTag;
+import com.sk89q.jnbt.CompoundTag;
+import com.sk89q.jnbt.DoubleTag;
+import com.sk89q.jnbt.EndTag;
+import com.sk89q.jnbt.FloatTag;
+import com.sk89q.jnbt.IntArrayTag;
+import com.sk89q.jnbt.IntTag;
+import com.sk89q.jnbt.ListTag;
+import com.sk89q.jnbt.LongArrayTag;
+import com.sk89q.jnbt.LongTag;
+import com.sk89q.jnbt.NBTConstants;
+import com.sk89q.jnbt.ShortTag;
+import com.sk89q.jnbt.StringTag;
+import com.sk89q.jnbt.Tag;
 import com.sk89q.worldedit.WorldEditException;
 import com.sk89q.worldedit.blocks.BaseItem;
 import com.sk89q.worldedit.blocks.BaseItemStack;
@@ -50,24 +65,9 @@ import com.sk89q.worldedit.registry.state.IntegerProperty;
 import com.sk89q.worldedit.registry.state.Property;
 import com.sk89q.worldedit.util.Direction;
 import com.sk89q.worldedit.util.SideEffect;
-import com.sk89q.worldedit.util.concurrency.LazyReference;
 import com.sk89q.worldedit.util.formatting.text.Component;
 import com.sk89q.worldedit.util.formatting.text.TranslatableComponent;
 import com.sk89q.worldedit.util.io.file.SafeFiles;
-import com.sk89q.worldedit.util.nbt.BinaryTag;
-import com.sk89q.worldedit.util.nbt.ByteArrayBinaryTag;
-import com.sk89q.worldedit.util.nbt.ByteBinaryTag;
-import com.sk89q.worldedit.util.nbt.CompoundBinaryTag;
-import com.sk89q.worldedit.util.nbt.DoubleBinaryTag;
-import com.sk89q.worldedit.util.nbt.EndBinaryTag;
-import com.sk89q.worldedit.util.nbt.FloatBinaryTag;
-import com.sk89q.worldedit.util.nbt.IntArrayBinaryTag;
-import com.sk89q.worldedit.util.nbt.IntBinaryTag;
-import com.sk89q.worldedit.util.nbt.ListBinaryTag;
-import com.sk89q.worldedit.util.nbt.LongArrayBinaryTag;
-import com.sk89q.worldedit.util.nbt.LongBinaryTag;
-import com.sk89q.worldedit.util.nbt.ShortBinaryTag;
-import com.sk89q.worldedit.util.nbt.StringBinaryTag;
 import com.sk89q.worldedit.world.DataFixer;
 import com.sk89q.worldedit.world.RegenOptions;
 import com.sk89q.worldedit.world.biome.BiomeType;
@@ -203,7 +203,7 @@ public final class Spigot_v1_17_R1 implements BukkitImplAdapter {
 
 
         int dataVersion = CraftMagicNumbers.INSTANCE.getDataVersion();
-        if (dataVersion != 2584 && dataVersion != 2586) throw new UnsupportedClassVersionError("Not 1.16.4/1.16.5!");
+        if (dataVersion != 2724) throw new UnsupportedClassVersionError("Not 1.17!");
 
         // The list of tags on an NBTTagList
         nbtListTagListField = NBTTagList.class.getDeclaredField("c");
@@ -360,7 +360,7 @@ public final class Spigot_v1_17_R1 implements BukkitImplAdapter {
         if (te != null) {
             NBTTagCompound tag = new NBTTagCompound();
             readTileEntityIntoTag(te, tag); // Load data
-            return state.toBaseBlock((CompoundBinaryTag) toNative(tag));
+            return state.toBaseBlock((CompoundTag) toNative(tag));
         }
 
         return state.toBaseBlock();
@@ -417,7 +417,7 @@ public final class Spigot_v1_17_R1 implements BukkitImplAdapter {
         if (id != null) {
             NBTTagCompound tag = new NBTTagCompound();
             readEntityIntoTag(mcEntity, tag);
-            return new BaseEntity(com.sk89q.worldedit.world.entity.EntityTypes.get(id), LazyReference.from(() -> (CompoundBinaryTag) toNative(tag)));
+            return new BaseEntity(com.sk89q.worldedit.world.entity.EntityTypes.get(id), (CompoundTag) toNative(tag));
         } else {
             return null;
         }
@@ -435,7 +435,7 @@ public final class Spigot_v1_17_R1 implements BukkitImplAdapter {
         Entity createdEntity = createEntityFromId(state.getType().getId(), craftWorld.getHandle());
 
         if (createdEntity != null) {
-            CompoundBinaryTag nativeTag = state.getNbt();
+            CompoundTag nativeTag = state.getNbtData();
             if (nativeTag != null) {
                 NBTTagCompound tag = (NBTTagCompound) fromNative(nativeTag);
                 for (String name : Constants.NO_COPY_ENTITY_NBT_FIELDS) {
@@ -496,7 +496,7 @@ public final class Spigot_v1_17_R1 implements BukkitImplAdapter {
     }
 
     @Override
-    public void sendFakeNBT(Player player, BlockVector3 pos, CompoundBinaryTag nbtData) {
+    public void sendFakeNBT(Player player, BlockVector3 pos, CompoundTag nbtData) {
         ((CraftPlayer) player).getHandle().b.sendPacket(new PacketPlayOutTileEntityData(
                 new BlockPosition(pos.getBlockX(), pos.getBlockY(), pos.getBlockZ()),
                 7,
@@ -514,7 +514,7 @@ public final class Spigot_v1_17_R1 implements BukkitImplAdapter {
     @Override
     public org.bukkit.inventory.ItemStack adapt(BaseItemStack item) {
         ItemStack stack = new ItemStack(IRegistry.Z.get(MinecraftKey.a(item.getType().getId())), item.getAmount());
-        stack.setTag(((NBTTagCompound) fromNative(item.getNbt())));
+        stack.setTag(((NBTTagCompound) fromNative(item.getNbtData())));
         return CraftItemStack.asCraftMirror(stack);
     }
 
@@ -522,7 +522,7 @@ public final class Spigot_v1_17_R1 implements BukkitImplAdapter {
     public BaseItemStack adapt(org.bukkit.inventory.ItemStack itemStack) {
         final ItemStack nmsStack = CraftItemStack.asNMSCopy(itemStack);
         final BaseItemStack weStack = new BaseItemStack(BukkitAdapter.asItemType(itemStack.getType()), itemStack.getAmount());
-        weStack.setNbt(((CompoundBinaryTag) toNative(nmsStack.getTag())));
+        weStack.setNbtData(((CompoundTag) toNative(nmsStack.getTag())));
         return weStack;
     }
 
@@ -534,8 +534,8 @@ public final class Spigot_v1_17_R1 implements BukkitImplAdapter {
         CraftWorld craftWorld = (CraftWorld) world;
         WorldServer worldServer = craftWorld.getHandle();
         ItemStack stack = CraftItemStack.asNMSCopy(BukkitAdapter.adapt(item instanceof BaseItemStack
-                ? ((BaseItemStack) item) : new BaseItemStack(item.getType(), LazyReference.from(item::getNbt), 1)));
-        stack.setTag((NBTTagCompound) fromNative(item.getNbt()));
+                ? ((BaseItemStack) item) : new BaseItemStack(item.getType(), item.getNbtData(), 1)));
+        stack.setTag((NBTTagCompound) fromNative(item.getNbtData()));
 
         FakePlayer_v1_17_R1 fakePlayer;
         try {
@@ -595,10 +595,10 @@ public final class Spigot_v1_17_R1 implements BukkitImplAdapter {
 
             long seed = options.getSeed().orElse(originalWorld.getSeed());
 
-            WorldDataServer levelProperties = (WorldDataServer) originalWorld.getServer().getServer().getSaveData();
+            WorldDataServer levelProperties = (WorldDataServer) originalWorld.getCraftServer().getServer().getSaveData();
             RegistryReadOps<NBTBase> nbtRegOps = RegistryReadOps.a(
                 DynamicOpsNBT.a,
-                originalWorld.getServer().getServer().aC.i(),
+                originalWorld.getCraftServer().getServer().aC.i(),
                 IRegistryCustom.a()
             );
 
@@ -711,7 +711,7 @@ public final class Spigot_v1_17_R1 implements BukkitImplAdapter {
             if (blockEntity != null) {
                 NBTTagCompound tag = new NBTTagCompound();
                 blockEntity.save(tag);
-                state = state.toBaseBlock(((CompoundBinaryTag) toNative(tag)));
+                state = state.toBaseBlock(((CompoundTag) toNative(tag)));
             }
             extent.setBlock(vec, state.toBaseBlock());
             if (options.shouldRegenBiomes()) {
@@ -783,48 +783,48 @@ public final class Spigot_v1_17_R1 implements BukkitImplAdapter {
      * @param foreign non-native NMS NBT structure
      * @return native WorldEdit NBT structure
      */
-    BinaryTag toNative(NBTBase foreign) {
+    Tag toNative(NBTBase foreign) {
         if (foreign == null) {
             return null;
         }
         if (foreign instanceof NBTTagCompound) {
-            Map<String, BinaryTag> values = new HashMap<>();
+            Map<String, Tag> values = new HashMap<>();
             Set<String> foreignKeys = ((NBTTagCompound) foreign).getKeys(); // map.keySet
 
             for (String str : foreignKeys) {
                 NBTBase base = ((NBTTagCompound) foreign).get(str);
                 values.put(str, toNative(base));
             }
-            return CompoundBinaryTag.from(values);
+            return new CompoundTag(values);
         } else if (foreign instanceof NBTTagByte) {
-            return ByteBinaryTag.of(((NBTTagByte) foreign).asByte());
+            return new ByteTag(((NBTTagByte) foreign).asByte());
         } else if (foreign instanceof NBTTagByteArray) {
-            return ByteArrayBinaryTag.of(((NBTTagByteArray) foreign).getBytes());
+            return new ByteArrayTag(((NBTTagByteArray) foreign).getBytes()); // data
         } else if (foreign instanceof NBTTagDouble) {
-            return DoubleBinaryTag.of(((NBTTagDouble) foreign).asDouble());
+            return new DoubleTag(((NBTTagDouble) foreign).asDouble()); // getDouble
         } else if (foreign instanceof NBTTagFloat) {
-            return FloatBinaryTag.of(((NBTTagFloat) foreign).asFloat());
+            return new FloatTag(((NBTTagFloat) foreign).asFloat());
         } else if (foreign instanceof NBTTagInt) {
-            return IntBinaryTag.of(((NBTTagInt) foreign).asInt());
+            return new IntTag(((NBTTagInt) foreign).asInt());
         } else if (foreign instanceof NBTTagIntArray) {
-            return IntArrayBinaryTag.of(((NBTTagIntArray) foreign).getInts());
+            return new IntArrayTag(((NBTTagIntArray) foreign).getInts()); // data
         } else if (foreign instanceof NBTTagLongArray) {
-            return LongArrayBinaryTag.of(((NBTTagLongArray) foreign).getLongs());
+            return new LongArrayTag(((NBTTagLongArray) foreign).getLongs()); // data
         } else if (foreign instanceof NBTTagList) {
             try {
                 return toNativeList((NBTTagList) foreign);
             } catch (Throwable e) {
                 logger.log(Level.WARNING, "Failed to convert NBTTagList", e);
-                return ListBinaryTag.empty();
+                return new ListTag(ByteTag.class, new ArrayList<ByteTag>());
             }
         } else if (foreign instanceof NBTTagLong) {
-            return LongBinaryTag.of(((NBTTagLong) foreign).asLong());
+            return new LongTag(((NBTTagLong) foreign).asLong());
         } else if (foreign instanceof NBTTagShort) {
-            return ShortBinaryTag.of(((NBTTagShort) foreign).asShort());
+            return new ShortTag(((NBTTagShort) foreign).asShort());
         } else if (foreign instanceof NBTTagString) {
-            return StringBinaryTag.of(foreign.asString());
+            return new StringTag(foreign.asString());
         } else if (foreign instanceof NBTTagEnd) {
-            return EndBinaryTag.get();
+            return new EndTag();
         } else {
             throw new IllegalArgumentException("Don't know how to make native " + foreign.getClass().getCanonicalName());
         }
@@ -840,8 +840,9 @@ public final class Spigot_v1_17_R1 implements BukkitImplAdapter {
      * @throws IllegalArgumentException on error
      * @throws IllegalAccessException on error
      */
-    private ListBinaryTag toNativeList(NBTTagList foreign) throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
-        ListBinaryTag.Builder values = ListBinaryTag.builder();
+    private ListTag toNativeList(NBTTagList foreign) throws SecurityException, IllegalArgumentException, IllegalAccessException {
+        List<Tag> values = new ArrayList<>();
+        int type = foreign.e();
 
         List foreignList;
         foreignList = (List) nbtListTagListField.get(foreign);
@@ -850,7 +851,8 @@ public final class Spigot_v1_17_R1 implements BukkitImplAdapter {
             values.add(toNative(element)); // List elements shouldn't have names
         }
 
-        return values.build();
+        Class<? extends Tag> cls = NBTConstants.getClassFromType(type);
+        return new ListTag(cls, values);
     }
 
     /**
@@ -859,44 +861,45 @@ public final class Spigot_v1_17_R1 implements BukkitImplAdapter {
      * @param foreign structure to convert
      * @return non-native structure
      */
-    NBTBase fromNative(BinaryTag foreign) {
+    NBTBase fromNative(Tag foreign) {
         if (foreign == null) {
             return null;
         }
-        if (foreign instanceof CompoundBinaryTag) {
+        if (foreign instanceof CompoundTag) {
             NBTTagCompound tag = new NBTTagCompound();
-            for (String key : ((CompoundBinaryTag) foreign).keySet()) {
-                tag.set(key, fromNative(((CompoundBinaryTag) foreign).get(key)));
+            for (Map.Entry<String, Tag> entry : ((CompoundTag) foreign)
+                .getValue().entrySet()) {
+                tag.set(entry.getKey(), fromNative(entry.getValue()));
             }
             return tag;
-        } else if (foreign instanceof ByteBinaryTag) {
-            return NBTTagByte.a(((ByteBinaryTag) foreign).value());
-        } else if (foreign instanceof ByteArrayBinaryTag) {
-            return new NBTTagByteArray(((ByteArrayBinaryTag) foreign).value());
-        } else if (foreign instanceof DoubleBinaryTag) {
-            return NBTTagDouble.a(((DoubleBinaryTag) foreign).value());
-        } else if (foreign instanceof FloatBinaryTag) {
-            return NBTTagFloat.a(((FloatBinaryTag) foreign).value());
-        } else if (foreign instanceof IntBinaryTag) {
-            return NBTTagInt.a(((IntBinaryTag) foreign).value());
-        } else if (foreign instanceof IntArrayBinaryTag) {
-            return new NBTTagIntArray(((IntArrayBinaryTag) foreign).value());
-        } else if (foreign instanceof LongArrayBinaryTag) {
-            return new NBTTagLongArray(((LongArrayBinaryTag) foreign).value());
-        } else if (foreign instanceof ListBinaryTag) {
+        } else if (foreign instanceof ByteTag) {
+            return NBTTagByte.a(((ByteTag) foreign).getValue());
+        } else if (foreign instanceof ByteArrayTag) {
+            return new NBTTagByteArray(((ByteArrayTag) foreign).getValue());
+        } else if (foreign instanceof DoubleTag) {
+            return NBTTagDouble.a(((DoubleTag) foreign).getValue());
+        } else if (foreign instanceof FloatTag) {
+            return NBTTagFloat.a(((FloatTag) foreign).getValue());
+        } else if (foreign instanceof IntTag) {
+            return NBTTagInt.a(((IntTag) foreign).getValue());
+        } else if (foreign instanceof IntArrayTag) {
+            return new NBTTagIntArray(((IntArrayTag) foreign).getValue());
+        } else if (foreign instanceof LongArrayTag) {
+            return new NBTTagLongArray(((LongArrayTag) foreign).getValue());
+        } else if (foreign instanceof ListTag) {
             NBTTagList tag = new NBTTagList();
-            ListBinaryTag foreignList = (ListBinaryTag) foreign;
-            for (BinaryTag t : foreignList) {
+            ListTag foreignList = (ListTag) foreign;
+            for (Tag t : foreignList.getValue()) {
                 tag.add(fromNative(t));
             }
             return tag;
-        } else if (foreign instanceof LongBinaryTag) {
-            return NBTTagLong.a(((LongBinaryTag) foreign).value());
-        } else if (foreign instanceof ShortBinaryTag) {
-            return NBTTagShort.a(((ShortBinaryTag) foreign).value());
-        } else if (foreign instanceof StringBinaryTag) {
-            return NBTTagString.a(((StringBinaryTag) foreign).value());
-        } else if (foreign instanceof EndBinaryTag) {
+        } else if (foreign instanceof LongTag) {
+            return NBTTagLong.a(((LongTag) foreign).getValue());
+        } else if (foreign instanceof ShortTag) {
+            return NBTTagShort.a(((ShortTag) foreign).getValue());
+        } else if (foreign instanceof StringTag) {
+            return NBTTagString.a(((StringTag) foreign).getValue());
+        } else if (foreign instanceof EndTag) {
             return NBTTagEnd.b;
         } else {
             throw new IllegalArgumentException("Don't know how to make NMS " + foreign.getClass().getCanonicalName());

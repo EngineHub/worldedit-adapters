@@ -1,11 +1,11 @@
 package com.sk89q.worldedit.bukkit.adapter.impl;
 
+import com.sk89q.jnbt.CompoundTag;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.internal.block.BlockStateIdAccess;
 import com.sk89q.worldedit.internal.wna.WorldNativeAccess;
 import com.sk89q.worldedit.util.SideEffect;
 import com.sk89q.worldedit.util.SideEffectSet;
-import com.sk89q.worldedit.util.nbt.CompoundBinaryTag;
 import com.sk89q.worldedit.world.block.BlockState;
 import net.minecraft.core.BlockPosition;
 import net.minecraft.core.EnumDirection;
@@ -88,7 +88,7 @@ public class WorldNativeAccess_v1_17_R1 implements WorldNativeAccess<Chunk, IBlo
     }
 
     @Override
-    public boolean updateTileEntity(BlockPosition position, CompoundBinaryTag tag) {
+    public boolean updateTileEntity(BlockPosition position, CompoundTag tag) {
         // We will assume that the tile entity was created for us,
         // though we do not do this on the other versions
         TileEntity tileEntity = getWorld().getTileEntity(position);
@@ -149,7 +149,7 @@ public class WorldNativeAccess_v1_17_R1 implements WorldNativeAccess<Chunk, IBlo
             CraftWorld craftWorld = world.getWorld();
             if (craftWorld != null) {
                 BlockPhysicsEvent event = new BlockPhysicsEvent(craftWorld.getBlockAt(pos.getX(), pos.getY(), pos.getZ()), CraftBlockData.fromData(newState));
-                world.getServer().getPluginManager().callEvent(event);
+                world.getCraftServer().getPluginManager().callEvent(event);
                 if (event.isCancelled()) {
                     return;
                 }
