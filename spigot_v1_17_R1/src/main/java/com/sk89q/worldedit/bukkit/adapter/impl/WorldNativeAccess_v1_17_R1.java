@@ -7,6 +7,7 @@ import com.sk89q.worldedit.internal.wna.WorldNativeAccess;
 import com.sk89q.worldedit.util.SideEffect;
 import com.sk89q.worldedit.util.SideEffectSet;
 import com.sk89q.worldedit.world.block.BlockState;
+import com.sk89q.worldedit.world.storage.ChunkStore;
 import net.minecraft.core.BlockPosition;
 import net.minecraft.core.EnumDirection;
 import net.minecraft.nbt.NBTBase;
@@ -100,8 +101,10 @@ public class WorldNativeAccess_v1_17_R1 implements WorldNativeAccess<Chunk, IBlo
     }
 
     @Override
-    public void notifyBlockUpdate(BlockPosition position, IBlockData oldState, IBlockData newState) {
-        getWorld().notify(position, oldState, newState, UPDATE | NOTIFY);
+    public void notifyBlockUpdate(Chunk chunk, BlockPosition position, IBlockData oldState, IBlockData newState) {
+        if (chunk.getSections()[position.getY() >> ChunkStore.CHUNK_SHIFTS] != null) {
+            getWorld().notify(position, oldState, newState, UPDATE | NOTIFY);
+        }
     }
 
     @Override
@@ -110,8 +113,10 @@ public class WorldNativeAccess_v1_17_R1 implements WorldNativeAccess<Chunk, IBlo
     }
 
     @Override
-    public void markBlockChanged(BlockPosition position) {
-        ((ChunkProviderServer) getWorld().getChunkProvider()).flagDirty(position);
+    public void markBlockChanged(Chunk chunk, BlockPosition position) {
+        if (chunk.getSections()[position.getY() >> ChunkStore.CHUNK_SHIFTS] != null) {
+            ((ChunkProviderServer) getWorld().getChunkProvider()).flagDirty(position);
+        }
     }
 
     private static final EnumDirection[] NEIGHBOUR_ORDER = {
