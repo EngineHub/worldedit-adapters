@@ -183,7 +183,7 @@ import javax.annotation.Nullable;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
-public final class Spigot_v1_17_R1 implements BukkitImplAdapter {
+public final class Spigot_v1_17_R1_2 implements BukkitImplAdapter {
 
     private final Logger logger = Logger.getLogger(getClass().getCanonicalName());
 
@@ -197,13 +197,13 @@ public final class Spigot_v1_17_R1 implements BukkitImplAdapter {
     // Code that may break between versions of Minecraft
     // ------------------------------------------------------------------------
 
-    public Spigot_v1_17_R1() throws NoSuchFieldException, NoSuchMethodException {
+    public Spigot_v1_17_R1_2() throws NoSuchFieldException, NoSuchMethodException {
         // A simple test
         CraftServer.class.cast(Bukkit.getServer());
 
 
         int dataVersion = CraftMagicNumbers.INSTANCE.getDataVersion();
-        if (dataVersion != 2724) throw new UnsupportedClassVersionError("Not 1.17!");
+        if (dataVersion != 2730) throw new UnsupportedClassVersionError("Not 1.17.1!");
 
         // The list of tags on an NBTTagList
         nbtListTagListField = NBTTagList.class.getDeclaredField("c");
@@ -219,7 +219,7 @@ public final class Spigot_v1_17_R1 implements BukkitImplAdapter {
         chunkProviderExecutorField = ChunkProviderServer.class.getDeclaredField("h");
         chunkProviderExecutorField.setAccessible(true);
 
-        new DataConverters_1_17_R1(CraftMagicNumbers.INSTANCE.getDataVersion(), this).build(ForkJoinPool.commonPool());
+        new DataConverters_1_17_R1_2(CraftMagicNumbers.INSTANCE.getDataVersion(), this).build(ForkJoinPool.commonPool());
 
         Watchdog watchdog;
         try {
@@ -242,7 +242,7 @@ public final class Spigot_v1_17_R1 implements BukkitImplAdapter {
 
     @Override
     public DataFixer getDataFixer() {
-        return DataConverters_1_17_R1.INSTANCE;
+        return DataConverters_1_17_R1_2.INSTANCE;
     }
 
     /**
@@ -369,7 +369,7 @@ public final class Spigot_v1_17_R1 implements BukkitImplAdapter {
 
     @Override
     public WorldNativeAccess<?, ?, ?> createWorldNativeAccess(org.bukkit.World world) {
-        return new WorldNativeAccess_v1_17_R1(this,
+        return new WorldNativeAccess_v1_17_R1_2(this,
             new WeakReference<>(((CraftWorld) world).getHandle()));
     }
 
@@ -527,8 +527,8 @@ public final class Spigot_v1_17_R1 implements BukkitImplAdapter {
         return weStack;
     }
 
-    private LoadingCache<WorldServer, FakePlayer_v1_17_R1> fakePlayers
-            = CacheBuilder.newBuilder().weakKeys().softValues().build(CacheLoader.from(FakePlayer_v1_17_R1::new));
+    private LoadingCache<WorldServer, FakePlayer_v1_17_R1_2> fakePlayers
+            = CacheBuilder.newBuilder().weakKeys().softValues().build(CacheLoader.from(FakePlayer_v1_17_R1_2::new));
 
     @Override
     public boolean simulateItemUse(org.bukkit.World world, BlockVector3 position, BaseItem item, Direction face) {
@@ -538,7 +538,7 @@ public final class Spigot_v1_17_R1 implements BukkitImplAdapter {
                 ? ((BaseItemStack) item) : new BaseItemStack(item.getType(), item.getNbtData(), 1)));
         stack.setTag((NBTTagCompound) fromNative(item.getNbtData()));
 
-        FakePlayer_v1_17_R1 fakePlayer;
+        FakePlayer_v1_17_R1_2 fakePlayer;
         try {
             fakePlayer = fakePlayers.get(worldServer);
         } catch (ExecutionException ignored) {
@@ -599,7 +599,7 @@ public final class Spigot_v1_17_R1 implements BukkitImplAdapter {
             WorldDataServer levelProperties = (WorldDataServer) originalWorld.getCraftServer().getServer().getSaveData();
             RegistryReadOps<NBTBase> nbtRegOps = RegistryReadOps.a(
                 DynamicOpsNBT.a,
-                originalWorld.getCraftServer().getServer().aC.i(),
+                originalWorld.getCraftServer().getServer().aB.i(),
                 IRegistryCustom.a()
             );
 
@@ -625,7 +625,7 @@ public final class Spigot_v1_17_R1 implements BukkitImplAdapter {
 
             WorldServer freshWorld = new WorldServer(
                 originalWorld.getMinecraftServer(),
-                originalWorld.getMinecraftServer().aA,
+                originalWorld.getMinecraftServer().az,
                 session, newWorldData,
                 originalWorld.getDimensionKey(),
                 originalWorld.getDimensionManager(),

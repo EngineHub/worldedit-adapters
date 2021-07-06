@@ -28,14 +28,14 @@ import java.lang.ref.WeakReference;
 import java.util.Objects;
 import javax.annotation.Nullable;
 
-public class WorldNativeAccess_v1_17_R1 implements WorldNativeAccess<Chunk, IBlockData, BlockPosition> {
+public class WorldNativeAccess_v1_17_R1_2 implements WorldNativeAccess<Chunk, IBlockData, BlockPosition> {
     private static final int UPDATE = 1, NOTIFY = 2;
 
-    private final Spigot_v1_17_R1 adapter;
+    private final Spigot_v1_17_R1_2 adapter;
     private final WeakReference<World> world;
     private SideEffectSet sideEffectSet;
 
-    public WorldNativeAccess_v1_17_R1(Spigot_v1_17_R1 adapter, WeakReference<World> world) {
+    public WorldNativeAccess_v1_17_R1_2(Spigot_v1_17_R1_2 adapter, WeakReference<World> world) {
         this.adapter = adapter;
         this.world = world;
     }
@@ -96,7 +96,7 @@ public class WorldNativeAccess_v1_17_R1 implements WorldNativeAccess<Chunk, IBlo
             return false;
         }
         NBTBase nativeTag = adapter.fromNative(tag);
-        Spigot_v1_17_R1.readTagIntoTileEntity((NBTTagCompound) nativeTag, tileEntity);
+        Spigot_v1_17_R1_2.readTagIntoTileEntity((NBTTagCompound) nativeTag, tileEntity);
         return true;
     }
 
