@@ -1,39 +1,41 @@
 package com.sk89q.worldedit.bukkit.adapter.impl;
 
+import com.sk89q.jnbt.CompoundTag;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.internal.block.BlockStateIdAccess;
 import com.sk89q.worldedit.internal.wna.WorldNativeAccess;
 import com.sk89q.worldedit.util.SideEffect;
 import com.sk89q.worldedit.util.SideEffectSet;
-import com.sk89q.worldedit.util.nbt.CompoundBinaryTag;
+import com.sk89q.worldedit.world.block.BlockState;
 import com.sk89q.worldedit.world.storage.ChunkStore;
-import net.minecraft.server.v1_15_R1.Block;
-import net.minecraft.server.v1_15_R1.BlockPosition;
-import net.minecraft.server.v1_15_R1.Chunk;
-import net.minecraft.server.v1_15_R1.ChunkProviderServer;
-import net.minecraft.server.v1_15_R1.EnumDirection;
-import net.minecraft.server.v1_15_R1.IBlockData;
-import net.minecraft.server.v1_15_R1.NBTBase;
-import net.minecraft.server.v1_15_R1.NBTTagCompound;
-import net.minecraft.server.v1_15_R1.PlayerChunk;
-import net.minecraft.server.v1_15_R1.TileEntity;
-import net.minecraft.server.v1_15_R1.World;
-import org.bukkit.craftbukkit.v1_15_R1.CraftWorld;
-import org.bukkit.craftbukkit.v1_15_R1.block.data.CraftBlockData;
+import net.minecraft.core.BlockPosition;
+import net.minecraft.core.EnumDirection;
+import net.minecraft.nbt.NBTBase;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.server.level.ChunkProviderServer;
+import net.minecraft.server.level.PlayerChunk;
+import net.minecraft.world.level.GeneratorAccess;
+import net.minecraft.world.level.World;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.TileEntity;
+import net.minecraft.world.level.block.state.IBlockData;
+import net.minecraft.world.level.chunk.Chunk;
+import org.bukkit.craftbukkit.v1_17_R1.CraftWorld;
+import org.bukkit.craftbukkit.v1_17_R1.block.data.CraftBlockData;
 import org.bukkit.event.block.BlockPhysicsEvent;
 
 import java.lang.ref.WeakReference;
 import java.util.Objects;
 import javax.annotation.Nullable;
 
-public class WorldNativeAccess_v1_15_R2 implements WorldNativeAccess<Chunk, IBlockData, BlockPosition> {
+public class WorldNativeAccess_v1_17_R1_2 implements WorldNativeAccess<Chunk, IBlockData, BlockPosition> {
     private static final int UPDATE = 1, NOTIFY = 2;
 
-    private final Spigot_v1_15_R2 adapter;
+    private final Spigot_v1_17_R1_2 adapter;
     private final WeakReference<World> world;
     private SideEffectSet sideEffectSet;
 
-    public WorldNativeAccess_v1_15_R2(Spigot_v1_15_R2 adapter, WeakReference<World> world) {
+    public WorldNativeAccess_v1_17_R1_2(Spigot_v1_17_R1_2 adapter, WeakReference<World> world) {
         this.adapter = adapter;
         this.world = world;
     }
@@ -53,7 +55,7 @@ public class WorldNativeAccess_v1_15_R2 implements WorldNativeAccess<Chunk, IBlo
     }
 
     @Override
-    public IBlockData toNative(com.sk89q.worldedit.world.block.BlockState state) {
+    public IBlockData toNative(BlockState state) {
         int stateId = BlockStateIdAccess.getBlockStateId(state);
         return BlockStateIdAccess.isValidInternalId(stateId)
             ? Block.getByCombinedId(stateId)
@@ -87,41 +89,40 @@ public class WorldNativeAccess_v1_15_R2 implements WorldNativeAccess<Chunk, IBlo
     }
 
     @Override
-    public boolean updateTileEntity(BlockPosition position, CompoundBinaryTag tag) {
-        // We will assume that the tile entity was created for us,
-        // though we do not do this on the other versions
+    public boolean updateTileEntity(BlockPosition position, CompoundTag tag) {
+        // We will assume that the tile entity was created for us
         TileEntity tileEntity = getWorld().getTileEntity(position);
         if (tileEntity == null) {
             return false;
         }
         NBTBase nativeTag = adapter.fromNative(tag);
-        Spigot_v1_15_R2.readTagIntoTileEntity((NBTTagCompound) nativeTag, tileEntity);
+        Spigot_v1_17_R1_2.readTagIntoTileEntity((NBTTagCompound) nativeTag, tileEntity);
         return true;
     }
 
     @Override
     public void notifyBlockUpdate(Chunk chunk, BlockPosition position, IBlockData oldState, IBlockData newState) {
-        if (chunk.getSections()[position.getY() >> ChunkStore.CHUNK_SHIFTS] != null) {
+        if (chunk.getSections()[world.get().getSectionIndex(position.getY())] != null) {
             getWorld().notify(position, oldState, newState, UPDATE | NOTIFY);
         }
     }
 
     @Override
     public boolean isChunkTicking(Chunk chunk) {
-        return chunk.getState().isAtLeast(PlayerChunk.State.TICKING);
+        return chunk.getState().isAtLeast(PlayerChunk.State.c);
     }
 
     @Override
     public void markBlockChanged(Chunk chunk, BlockPosition position) {
-        if (chunk.getSections()[position.getY() >> ChunkStore.CHUNK_SHIFTS] != null) {
+        if (chunk.getSections()[world.get().getSectionIndex(position.getY())] != null) {
             ((ChunkProviderServer) getWorld().getChunkProvider()).flagDirty(position);
         }
     }
 
     private static final EnumDirection[] NEIGHBOUR_ORDER = {
-        EnumDirection.WEST, EnumDirection.EAST,
-        EnumDirection.DOWN, EnumDirection.UP,
-        EnumDirection.NORTH, EnumDirection.SOUTH
+        EnumDirection.e, EnumDirection.f,
+        EnumDirection.a, EnumDirection.b,
+        EnumDirection.c, EnumDirection.d
     };
 
     @Override
@@ -147,19 +148,19 @@ public class WorldNativeAccess_v1_15_R2 implements WorldNativeAccess<Chunk, IBlo
         World world = getWorld();
         // a == updateNeighbors
         // b == updateDiagonalNeighbors
-        oldState.b(world, pos, NOTIFY);
+        oldState.b(world, pos, NOTIFY, recursionLimit);
         if (sideEffectSet.shouldApply(SideEffect.EVENTS)) {
             CraftWorld craftWorld = world.getWorld();
             if (craftWorld != null) {
                 BlockPhysicsEvent event = new BlockPhysicsEvent(craftWorld.getBlockAt(pos.getX(), pos.getY(), pos.getZ()), CraftBlockData.fromData(newState));
-                world.getServer().getPluginManager().callEvent(event);
+                world.getCraftServer().getPluginManager().callEvent(event);
                 if (event.isCancelled()) {
                     return;
                 }
             }
         }
-        newState.a(world, pos, NOTIFY);
-        newState.b(world, pos, NOTIFY);
+        newState.a((GeneratorAccess) world, pos, NOTIFY, recursionLimit);
+        newState.b(world, pos, NOTIFY, recursionLimit);
     }
 
     @Override
