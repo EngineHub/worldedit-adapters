@@ -591,35 +591,22 @@ public final class Spigot_v1_16_R3 implements BukkitImplAdapter {
         ResourceKey<WorldDimension> worldDimKey = getWorldDimKey(env);
         try (Convertable.ConversionSession session = convertable.c("worldeditregentempworld", worldDimKey)) {
             WorldServer originalWorld = ((CraftWorld) bukkitWorld).getHandle();
-            WorldDataServer originalWorldData = originalWorld.worldDataServer;
+            WorldDataServer originalSettings = originalWorld.worldDataServer;
+            GeneratorSettings originalOpts = originalSettings.getGeneratorSettings();
 
             long seed = options.getSeed().orElse(originalWorld.getSeed());
-
-            WorldDataServer levelProperties = (WorldDataServer) originalWorld.getServer().getServer().getSaveData();
-            RegistryReadOps<NBTBase> nbtRegOps = RegistryReadOps.a(
-                DynamicOpsNBT.a,
-                originalWorld.getServer().getServer().dataPackResources.h(),
-                IRegistryCustom.b()
-            );
-
-            GeneratorSettings newOpts = GeneratorSettings.a
-                .encodeStart(nbtRegOps, levelProperties.getGeneratorSettings())
-                .flatMap(tag ->
-                    GeneratorSettings.a.parse(
-                        recursivelySetSeed(new Dynamic<>(nbtRegOps, tag), seed, new HashSet<>())
-                    )
-                )
-                .result()
-                .orElseThrow(() -> new IllegalStateException("Unable to map GeneratorOptions"));
+            GeneratorSettings newOpts = options.getSeed().isPresent()
+                ? replaceSeed(originalWorld, seed, originalOpts)
+                : originalOpts;
 
 
             WorldSettings newWorldSettings = new WorldSettings("worldeditregentempworld",
-                originalWorldData.b.getGameType(),
-                originalWorldData.b.hardcore,
-                originalWorldData.b.getDifficulty(),
-                originalWorldData.b.e(),
-                originalWorldData.b.getGameRules(),
-                originalWorldData.b.g());
+                originalSettings.b.getGameType(),
+                originalSettings.b.isHardcore(),
+                originalSettings.b.getDifficulty(),
+                originalSettings.b.e(),
+                originalSettings.b.getGameRules(),
+                originalSettings.b.g());
             WorldDataServer newWorldData = new WorldDataServer(newWorldSettings, newOpts, Lifecycle.stable());
 
             WorldServer freshWorld = new WorldServer(
@@ -650,6 +637,24 @@ public final class Spigot_v1_16_R3 implements BukkitImplAdapter {
             }
             SafeFiles.tryHardToDeleteDir(tempDir);
         }
+    }
+
+    private GeneratorSettings replaceSeed(WorldServer originalWorld, long seed, GeneratorSettings originalOpts) {
+        RegistryReadOps<NBTBase> nbtRegOps = RegistryReadOps.a(
+            DynamicOpsNBT.a,
+            originalWorld.getServer().getServer().dataPackResources.h(),
+            IRegistryCustom.b()
+        );
+
+        return GeneratorSettings.a
+            .encodeStart(nbtRegOps, originalOpts)
+            .flatMap(tag ->
+                GeneratorSettings.a.parse(
+                    recursivelySetSeed(new Dynamic<>(nbtRegOps, tag), seed, new HashSet<>())
+                )
+            )
+            .result()
+            .orElseThrow(() -> new IllegalStateException("Unable to map GeneratorOptions"));
     }
 
     @SuppressWarnings("unchecked")
