@@ -67,7 +67,7 @@ public class WorldNativeAccess_v1_13_R2_2 implements WorldNativeAccess<Chunk, IB
     @Nullable
     @Override
     public IBlockData setBlockState(Chunk chunk, BlockPosition position, IBlockData state) {
-        return chunk.setType(position, state, false);
+        return chunk.setType(position, state, false, false);
     }
 
     @Override
