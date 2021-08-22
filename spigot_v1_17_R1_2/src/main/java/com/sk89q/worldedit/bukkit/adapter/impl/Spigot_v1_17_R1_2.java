@@ -160,12 +160,14 @@ import org.spigotmc.SpigotConfig;
 import org.spigotmc.WatchdogThread;
 
 import java.lang.ref.WeakReference;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -193,6 +195,9 @@ public final class Spigot_v1_17_R1_2 implements BukkitImplAdapter {
     private final Field chunkProviderExecutorField;
     private final Watchdog watchdog;
 
+    private final Constructor<?> worldServerCtor;
+    private final boolean worldServerCtorUsesBiomeProvider;
+
     // ------------------------------------------------------------------------
     // Code that may break between versions of Minecraft
     // ------------------------------------------------------------------------
@@ -218,6 +223,10 @@ public final class Spigot_v1_17_R1_2 implements BukkitImplAdapter {
 
         chunkProviderExecutorField = ChunkProviderServer.class.getDeclaredField("h");
         chunkProviderExecutorField.setAccessible(true);
+
+        // hack for world gen changes, drop this once we stop supporting old builds
+        worldServerCtor = WorldServer.class.getDeclaredConstructors()[0];
+        worldServerCtorUsesBiomeProvider = worldServerCtor.getParameterCount() == 15;
 
         new DataConverters_1_17_R1_2(CraftMagicNumbers.INSTANCE.getDataVersion(), this).build(ForkJoinPool.commonPool());
 
@@ -611,7 +620,7 @@ public final class Spigot_v1_17_R1_2 implements BukkitImplAdapter {
                 originalSettings.e.g());
             WorldDataServer newWorldData = new WorldDataServer(newWorldSettings, newOpts, Lifecycle.stable());
 
-            WorldServer freshWorld = new WorldServer(
+            List<Object> ctorArgs = new ArrayList<>(Arrays.asList(
                 originalWorld.getMinecraftServer(),
                 originalWorld.getMinecraftServer().az,
                 session, newWorldData,
@@ -625,7 +634,11 @@ public final class Spigot_v1_17_R1_2 implements BukkitImplAdapter {
                 ImmutableList.of(),
                 false,
                 env, gen
-            );
+            ));
+            if (worldServerCtorUsesBiomeProvider) {
+                ctorArgs.add(bukkitWorld.getBiomeProvider());
+            }
+            WorldServer freshWorld = (WorldServer) worldServerCtor.newInstance(ctorArgs.toArray());
             try {
                 regenForWorld(region, extent, freshWorld, options);
             } finally {
