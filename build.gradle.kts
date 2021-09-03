@@ -36,7 +36,7 @@ subprojects {
     }
 
     dependencies {
-        implementation("com.sk89q.worldedit:worldedit-bukkit:7.2.6-SNAPSHOT")
+        implementation("com.sk89q.worldedit:worldedit-bukkit:7.2.7-SNAPSHOT")
     }
 
     tasks.compileJava.configure {

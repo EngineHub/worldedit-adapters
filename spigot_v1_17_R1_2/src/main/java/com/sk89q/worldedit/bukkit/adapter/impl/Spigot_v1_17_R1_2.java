@@ -111,6 +111,7 @@ import net.minecraft.server.level.WorldServer;
 import net.minecraft.server.level.progress.WorldLoadListener;
 import net.minecraft.util.INamable;
 import net.minecraft.util.thread.IAsyncTaskHandler;
+import net.minecraft.world.Clearable;
 import net.minecraft.world.EnumHand;
 import net.minecraft.world.EnumInteractionResult;
 import net.minecraft.world.entity.Entity;
@@ -778,6 +779,18 @@ public final class Spigot_v1_17_R1_2 implements BukkitImplAdapter {
     @Override
     public Set<SideEffect> getSupportedSideEffects() {
         return SUPPORTED_SIDE_EFFECTS;
+    }
+
+    @Override
+    public boolean clearContainerBlockContents(org.bukkit.World world, BlockVector3 pt) {
+        WorldServer originalWorld = ((CraftWorld) world).getHandle();
+
+        TileEntity entity = originalWorld.getTileEntity(new BlockPosition(pt.getBlockX(), pt.getBlockY(), pt.getBlockZ()));
+        if (entity instanceof Clearable) {
+            ((Clearable) entity).clear();
+            return true;
+        }
+        return false;
     }
 
     // ------------------------------------------------------------------------
