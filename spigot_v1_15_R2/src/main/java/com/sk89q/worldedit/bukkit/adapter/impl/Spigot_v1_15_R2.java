@@ -84,6 +84,7 @@ import net.minecraft.server.v1_15_R1.Blocks;
 import net.minecraft.server.v1_15_R1.Chunk;
 import net.minecraft.server.v1_15_R1.ChunkCoordIntPair;
 import net.minecraft.server.v1_15_R1.ChunkStatus;
+import net.minecraft.server.v1_15_R1.Clearable;
 import net.minecraft.server.v1_15_R1.DedicatedServer;
 import net.minecraft.server.v1_15_R1.Entity;
 import net.minecraft.server.v1_15_R1.EntityTypes;
@@ -602,6 +603,18 @@ public final class Spigot_v1_15_R2 implements BukkitImplAdapter {
     @Override
     public Set<SideEffect> getSupportedSideEffects() {
         return SUPPORTED_SIDE_EFFECTS;
+    }
+
+    @Override
+    public boolean clearContainerBlockContents(org.bukkit.World world, BlockVector3 pt) {
+        WorldServer originalWorld = ((CraftWorld) world).getHandle();
+
+        TileEntity entity = originalWorld.getTileEntity(new BlockPosition(pt.getBlockX(), pt.getBlockY(), pt.getBlockZ()));
+        if (entity instanceof Clearable) {
+            ((Clearable) entity).clear();
+            return true;
+        }
+        return false;
     }
 
     // ------------------------------------------------------------------------
