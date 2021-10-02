@@ -310,7 +310,12 @@ public final class Spigot_v1_14_R4 implements BukkitImplAdapter {
     }
 
     @Override
-    public BaseBlock getBlock(Location location) {
+    public BlockState getBlock(Location location) {
+        return getFullBlock(location).toImmutableState();
+    }
+
+    @Override
+    public BaseBlock getFullBlock(Location location) {
         checkNotNull(location);
 
         CraftWorld craftWorld = ((CraftWorld) location.getWorld());
