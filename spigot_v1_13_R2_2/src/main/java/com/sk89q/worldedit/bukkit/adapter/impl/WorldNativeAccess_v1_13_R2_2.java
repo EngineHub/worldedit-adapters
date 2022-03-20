@@ -11,6 +11,7 @@ import net.minecraft.server.v1_13_R2.Block;
 import net.minecraft.server.v1_13_R2.BlockPosition;
 import net.minecraft.server.v1_13_R2.Chunk;
 import net.minecraft.server.v1_13_R2.EnumDirection;
+import net.minecraft.server.v1_13_R2.GeneratorAccess;
 import net.minecraft.server.v1_13_R2.IBlockData;
 import net.minecraft.server.v1_13_R2.NBTBase;
 import net.minecraft.server.v1_13_R2.NBTTagCompound;
@@ -146,7 +147,7 @@ public class WorldNativeAccess_v1_13_R2_2 implements WorldNativeAccess<Chunk, IB
         World world = getWorld();
         // a == updateNeighbors
         // b == updateDiagonalNeighbors
-        oldState.b(world, pos, NOTIFY);
+        oldState.b((GeneratorAccess) world, pos, NOTIFY);
         if (sideEffectSet.shouldApply(SideEffect.EVENTS)) {
             CraftWorld craftWorld = world.getWorld();
             if (craftWorld != null) {
@@ -159,8 +160,8 @@ public class WorldNativeAccess_v1_13_R2_2 implements WorldNativeAccess<Chunk, IB
                 }
             }
         }
-        newState.a(world, pos, NOTIFY);
-        newState.b(world, pos, NOTIFY);
+        newState.a((GeneratorAccess) world, pos, NOTIFY);
+        newState.b((GeneratorAccess) world, pos, NOTIFY);
     }
 
     @Override
